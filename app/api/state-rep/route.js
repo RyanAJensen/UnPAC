@@ -1,23 +1,26 @@
 import { findStateLegislator, getSponsoredBills, getCosponsoredBills } from '@/lib/openStatesApi';
 import { categorize } from '@/lib/voteCategories';
-import { generateMockForRep, MOCK_OPENSTATES_BILLS, MOCK_OPENSTATES_COSPONSORED } from '@/lib/mockData';
+import { generateMockForStateLeg } from '@/lib/mockData';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const name = searchParams.get('name') ?? '';
-  const state = searchParams.get('state') ?? '';
+  const name            = searchParams.get('name')        ?? '';
+  const state           = searchParams.get('state')       ?? '';
   const openStatesIdParam = searchParams.get('openStatesId') ?? null;
 
   if (!name && !openStatesIdParam) {
     return Response.json({ error: 'name or openStatesId is required' }, { status: 400 });
   }
 
+  // Stable seed so each state rep gets varied but reproducible mock data
+  const mockSeed = openStatesIdParam ?? `${name}-${state}`;
+
   const useMock = !process.env.OPENSTATES_API_KEY || process.env.OPENSTATES_API_KEY === 'your_openstates_api_key_here';
   if (useMock) {
     return Response.json({
       openStatesId: openStatesIdParam,
-      // State reps don't vote on federal landmark bills — suppress them
-      votes: buildVotes(MOCK_OPENSTATES_BILLS, MOCK_OPENSTATES_COSPONSORED),
+      // State reps never vote on federal landmark bills — use state-only mock pool
+      votes:           generateMockForStateLeg(mockSeed).bills,
       votesDataSource: 'openstates',
       errors: [{ source: 'openstates', message: 'Using mock data — set OPENSTATES_API_KEY' }],
     });
@@ -49,15 +52,14 @@ export async function GET(request) {
 
     if (sponsored.length === 0 && cosponsored.length === 0) {
       errors.push({ source: 'openstates', message: 'No bills found — showing representative sample' });
-      // State reps don't vote on federal landmark bills
-      votes = generateMockForRep(openStatesId, { includeLandmark: false }).bills;
+      // Fall back to state-level mock bills (never federal landmark votes)
+      votes = generateMockForStateLeg(openStatesId).bills;
     } else {
       votes = buildVotes(sponsored, cosponsored);
     }
   } catch (err) {
     errors.push({ source: 'openstates', message: err.message });
-    // State reps don't vote on federal landmark bills
-    votes = generateMockForRep(openStatesIdParam ?? name, { includeLandmark: false }).bills;
+    votes = generateMockForStateLeg(mockSeed).bills;
   }
 
   return Response.json({ openStatesId, votes, votesDataSource: 'openstates', errors });
@@ -70,21 +72,23 @@ export async function GET(request) {
  */
 function buildVotes(sponsored, cosponsored = []) {
   const sponsoredEntries = sponsored.map(b => ({
-    billId:    b.identifier ?? b.billId ?? '',
-    billTitle: b.title ?? b.billTitle ?? 'Untitled',
-    category:  categorize(b.title ?? b.billTitle ?? ''),
-    vote:      'Sponsored',
-    weight:    1.0,
-    date:      b.first_action_date ?? b.date ?? null,
+    billId:     b.identifier ?? b.billId ?? '',
+    billTitle:  b.title ?? b.billTitle ?? 'Untitled',
+    category:   categorize(b.title ?? b.billTitle ?? ''),
+    vote:       'Sponsored',
+    weight:     1.0,
+    isLandmark: false,
+    date:       b.first_action_date ?? b.date ?? null,
   }));
 
   const cosponsoredEntries = cosponsored.map(b => ({
-    billId:    b.identifier ?? b.billId ?? '',
-    billTitle: b.title ?? b.billTitle ?? 'Untitled',
-    category:  categorize(b.title ?? b.billTitle ?? ''),
-    vote:      'Cosponsored',
-    weight:    0.5,
-    date:      b.first_action_date ?? b.date ?? null,
+    billId:     b.identifier ?? b.billId ?? '',
+    billTitle:  b.title ?? b.billTitle ?? 'Untitled',
+    category:   categorize(b.title ?? b.billTitle ?? ''),
+    vote:       'Cosponsored',
+    weight:     0.5,
+    isLandmark: false,
+    date:       b.first_action_date ?? b.date ?? null,
   }));
 
   return [
