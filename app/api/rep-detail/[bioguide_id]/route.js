@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
 
   // Run Congress.gov and FEC in parallel
   const [congressResult, fecResult] = await Promise.allSettled([
-    fetchCongressData(bioguide_id),
+    fetchCongressData(bioguide_id, stateCode),
     fetchFECData(repName, stateCode, officeTitle, fecId),
   ]);
 
@@ -55,15 +55,19 @@ export async function GET(request, { params }) {
   });
 }
 
-async function fetchCongressData(bioguideId) {
+async function fetchCongressData(bioguideId, stateCodeParam) {
   // Fetch member detail first — we need chamber to route landmark vote lookups correctly.
   const memberDetail = await getMemberDetail(bioguideId);
-  const { chamber, state } = memberDetail;
+  const { chamber } = memberDetail;
 
   // Extract last name for Senate XML fallback matching
   // directOrderName is "FirstName LastName"; take the last token
   const nameParts = (memberDetail.name ?? '').trim().split(/\s+/);
   const lastName  = nameParts.at(-1) ?? '';
+
+  // Use the 2-letter state code from the request (e.g. "VT") — the Congress.gov API
+  // returns full state names ("Vermont") which don't match Senate XML abbreviations.
+  const stateCode = stateCodeParam || memberDetail.state;
 
   // Fetch everything else in parallel.
   // Landmark votes use official House Clerk / Senate.gov XML (accurate).
@@ -71,7 +75,7 @@ async function fetchCongressData(bioguideId) {
   const [sponsored, cosponsored, landmarkVotes, recentVotes] = await Promise.all([
     getSponsoredLegislation(bioguideId),
     getCosponsoredLegislation(bioguideId).catch(() => []),
-    getLandmarkVotes({ bioguideId, chamber, lastName, state }).catch(() => []),
+    getLandmarkVotes({ bioguideId, chamber, lastName, state: stateCode }).catch(() => []),
     getRecentFloorVotes(bioguideId).catch(() => []),
   ]);
 
