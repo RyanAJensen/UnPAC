@@ -33,7 +33,7 @@ export default function ResultsPage() {
 
   if (!result) return (
     <main className="min-h-screen bg-page">
-      <nav className="bg-navy-900 border-b border-navy-700">
+      <nav className="border-b border-navy-700" style={{ backgroundColor: '#0d1f36' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
           <span className="text-lg font-extrabold text-white tracking-tight">RepWatch</span>
         </div>
@@ -55,7 +55,7 @@ export default function ResultsPage() {
     <main className="min-h-screen bg-page">
 
       {/* Sticky nav */}
-      <nav className="bg-navy-900 border-b border-navy-700 sticky top-0 z-10">
+      <nav className="border-b border-navy-700 sticky top-0 z-10" style={{ backgroundColor: '#0d1f36' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-5">
           <button
             onClick={() => router.push('/')}

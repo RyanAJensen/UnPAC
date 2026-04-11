@@ -5,7 +5,6 @@ import VotingTable from './VotingTable';
 import DonationBubbleChart from './DonationBubbleChart';
 import ContributorsList from './ContributorsList';
 import InfluenceScore from './InfluenceScore';
-import ConflictReport from './ConflictReport';
 import DataGapBanner from './DataGapBanner';
 
 function getInitials(name) {
@@ -17,7 +16,6 @@ function getInitials(name) {
 export default function RepDetailPanel({ rep }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [conflictLoading, setConflictLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('legislation');
   const [photoError, setPhotoError] = useState(false);
 
@@ -58,28 +56,9 @@ export default function RepDetailPanel({ rep }) {
     }
   }
 
-  async function runConflictAnalysis() {
-    if (!detail?.votes?.length) return;
-    setConflictLoading(true);
-    try {
-      const res = await fetch('/api/conflict-detect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repName: rep.name, votes: detail.votes, finance: detail.finance ?? null }),
-      });
-      const report = await res.json();
-      setDetail(d => ({ ...d, conflict: report }));
-    } catch (err) {
-      setDetail(d => ({ ...d, conflict: { error: err.message } }));
-    } finally {
-      setConflictLoading(false);
-    }
-  }
-
   const tabs = [
     { id: 'legislation', label: 'Legislation' },
     { id: 'finance', label: 'Finance' },
-    { id: 'conflict', label: 'Conflicts' },
   ];
 
   return (
@@ -185,25 +164,6 @@ export default function RepDetailPanel({ rep }) {
               </div>
             )}
 
-            {activeTab === 'conflict' && (
-              <div className="space-y-3">
-                <p className="text-xs text-gray-500">
-                  Claude cross-references this representative's legislative record against their top donor industries to surface potential conflicts of interest.
-                </p>
-                <ConflictReport
-                  report={detail?.conflict}
-                  loading={conflictLoading}
-                  onAnalyze={runConflictAnalysis}
-                  hasData={!!(detail?.votes?.length)}
-                />
-                {detail?.conflict?.error && (
-                  <p className="text-xs text-red-500">Analysis error: {detail.conflict.error}</p>
-                )}
-                {!detail?.votes?.length && (
-                  <DataGapBanner source="Conflict analysis" reason="requires voting/sponsorship data" />
-                )}
-              </div>
-            )}
           </div>
         </>
       )}
