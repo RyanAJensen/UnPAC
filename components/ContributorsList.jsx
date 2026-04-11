@@ -16,11 +16,12 @@ export default function ContributorsList({ contributors }) {
     );
   }
 
-  const maxAmount = Math.max(...contributors.map(c => c.amount));
+  const sorted = [...contributors].sort((a, b) => b.amount - a.amount);
+  const maxAmount = sorted[0]?.amount ?? 1;
 
   return (
     <div className="space-y-3">
-      {contributors.map((c, i) => (
+      {sorted.map((c, i) => (
         <div key={i}>
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2 min-w-0">

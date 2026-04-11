@@ -110,8 +110,32 @@ async function fetchFECData(repName, stateCode, officeTitle, fecId) {
     cycle: '2024',
     totalRaised,
     sectors,
-    topContributors: contributions.slice(0, 10),
+    topContributors: aggregateTopContributors(contributions),
   };
+}
+
+/**
+ * Aggregate individual schedule A transactions into top organizations.
+ * PACs/SuperPACs group by their own name; individuals group by employer.
+ * Returns top 10 by total dollars contributed.
+ */
+function aggregateTopContributors(contributions) {
+  const byOrg = {};
+  for (const c of contributions) {
+    // PAC/SuperPAC: the contributor name IS the organization
+    // Individual: group by employer to see which companies donate most
+    const key = (c.isPAC || c.isSuperPAC) ? c.name : (c.employer?.trim() || c.name);
+    if (!key) continue;
+    if (!byOrg[key]) {
+      byOrg[key] = { name: key, amount: 0, isPAC: false, isSuperPAC: false };
+    }
+    byOrg[key].amount += c.amount;
+    if (c.isSuperPAC) byOrg[key].isSuperPAC = true;
+    else if (c.isPAC) byOrg[key].isPAC = true;
+  }
+  return Object.values(byOrg)
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 10);
 }
 
 /**

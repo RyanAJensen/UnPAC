@@ -1,5 +1,3 @@
-'use client';
-import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 import DataGapBanner from './DataGapBanner';
 
 const SECTOR_COLORS = {
@@ -21,63 +19,63 @@ const SECTOR_COLORS = {
   Other:            '#6b7280',
 };
 
-// Deterministic color for any sector name not explicitly mapped above.
-// Uses a string hash → HSL hue so every unknown sector gets its own distinct color.
 function sectorColor(name) {
   if (SECTOR_COLORS[name]) return SECTOR_COLORS[name];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
   }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 55%, 38%)`;
+  return `hsl(${Math.abs(hash) % 360}, 55%, 38%)`;
 }
 
-function CustomContent({ x, y, width, height, name, pct }) {
-  if (width < 40 || height < 30) return null;
-  return (
-    <g>
-      <rect x={x} y={y} width={width} height={height} fill={sectorColor(name)} rx={6} />
-      <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill="white" style={{ fontSize: Math.min(13, width / 8), fontWeight: 600 }}>
-        {name}
-      </text>
-      <text x={x + width / 2} y={y + height / 2 + 10} textAnchor="middle" fill="rgba(255,255,255,0.85)" style={{ fontSize: Math.min(11, width / 10) }}>
-        {pct}%
-      </text>
-    </g>
-  );
+function formatAmount(n) {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
+  return `$${n}`;
 }
+
+const MAX_R = 72;
+const MIN_R = 32;
 
 export default function DonationBubbleChart({ sectors, totalRaised }) {
   if (!sectors || sectors.length === 0) {
     return <DataGapBanner source="Campaign finance" reason="only available for federal representatives" />;
   }
 
-  const data = sectors.map(s => ({ name: s.sector, size: s.amount, pct: s.pct }));
+  const sorted = [...sectors].sort((a, b) => b.amount - a.amount);
+  const max = sorted[0]?.amount ?? 1;
 
   return (
     <div>
       {totalRaised != null && (
-        <p className="text-xs text-gray-500 mb-2">
-          Total raised (2024 cycle): <span className="font-semibold text-gray-700">${(totalRaised / 1_000_000).toFixed(1)}M</span>
+        <p className="text-xs text-gray-500 mb-4">
+          Total raised (2024 cycle): <span className="font-semibold text-gray-700">{formatAmount(totalRaised)}</span>
         </p>
       )}
-      <ResponsiveContainer width="100%" height={220}>
-        <Treemap
-          data={data}
-          dataKey="size"
-          content={<CustomContent />}
-          isAnimationActive={false}
-          animationDuration={0}
-        >
-          <Tooltip
-            formatter={(value, name, props) => [
-              `$${(value / 1000).toFixed(0)}K (${props.payload?.pct ?? 0}%)`,
-              props.payload?.name ?? name,
-            ]}
-          />
-        </Treemap>
-      </ResponsiveContainer>
+      <div className="flex flex-wrap gap-4 items-end justify-start">
+        {sorted.map(s => {
+          const r = Math.max(MIN_R, Math.round(MAX_R * Math.sqrt(s.amount / max)));
+          const diameter = r * 2;
+          const color = sectorColor(s.sector);
+          const nameFontSize = Math.min(12, r / 3.2);
+          const pctFontSize = Math.min(11, r / 3.8);
+          return (
+            <div key={s.sector} className="flex flex-col items-center gap-1.5">
+              <div
+                className="rounded-full flex flex-col items-center justify-center text-white"
+                style={{ width: diameter, height: diameter, background: color, flexShrink: 0 }}
+              >
+                <span style={{ fontSize: nameFontSize, fontWeight: 700, lineHeight: 1.2, textAlign: 'center', padding: '0 6px' }}>
+                  {s.sector}
+                </span>
+                <span style={{ fontSize: pctFontSize, opacity: 0.85, lineHeight: 1.1 }}>
+                  {s.pct}%
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
