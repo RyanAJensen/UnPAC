@@ -3,7 +3,6 @@ import { findCandidate, getPrincipalCommittee, getContributions, getTotalRaised,
 import { categorizeEmployers, aggregateBySector } from '@/lib/industryCategorizer';
 import { computeInfluenceScore } from '@/lib/influenceScore';
 import { categorize } from '@/lib/voteCategories';
-import { generateMockForRep } from '@/lib/mockData';
 
 export async function GET(request, { params }) {
   const { bioguide_id } = await params;
@@ -25,27 +24,24 @@ export async function GET(request, { params }) {
     fetchFECData(repName, stateCode, officeTitle, fecId),
   ]);
 
-  // Seeded mock as fallback (deterministic per rep so demo data looks varied)
-  const mock = generateMockForRep(bioguide_id);
-
-  // Congress.gov results
+  // Congress.gov results — never fall back to mock data; show nothing if unavailable
   if (congressResult.status === 'fulfilled') {
     memberDetail = congressResult.value.memberDetail;
     votes        = congressResult.value.votes;
   } else {
     errors.push({ source: 'congress.gov', message: congressResult.reason?.message ?? 'Unknown error' });
     memberDetail = null;
-    votes        = mock.bills;
+    votes        = null;
   }
 
-  // FEC results
+  // FEC results — never fall back to mock data; show nothing if unavailable
   if (fecResult.status === 'fulfilled') {
     finance        = fecResult.value;
     influenceScore = computeInfluenceScore(finance?.sectors ?? []);
   } else {
     errors.push({ source: 'fec', message: fecResult.reason?.message ?? 'Unknown error' });
-    finance        = mock.finance;
-    influenceScore = computeInfluenceScore(mock.finance.sectors);
+    finance        = null;
+    influenceScore = null;
   }
 
   return Response.json({
