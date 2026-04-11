@@ -16,6 +16,7 @@ export async function GET(request) {
   if (useMock) {
     return Response.json({
       openStatesId: openStatesIdParam,
+      // State reps don't vote on federal landmark bills — suppress them
       votes: buildVotes(MOCK_OPENSTATES_BILLS, MOCK_OPENSTATES_COSPONSORED),
       votesDataSource: 'openstates',
       errors: [{ source: 'openstates', message: 'Using mock data — set OPENSTATES_API_KEY' }],
@@ -48,13 +49,15 @@ export async function GET(request) {
 
     if (sponsored.length === 0 && cosponsored.length === 0) {
       errors.push({ source: 'openstates', message: 'No bills found — showing representative sample' });
-      votes = generateMockForRep(openStatesId).bills;
+      // State reps don't vote on federal landmark bills
+      votes = generateMockForRep(openStatesId, { includeLandmark: false }).bills;
     } else {
       votes = buildVotes(sponsored, cosponsored);
     }
   } catch (err) {
     errors.push({ source: 'openstates', message: err.message });
-    votes = generateMockForRep(openStatesIdParam ?? name).bills;
+    // State reps don't vote on federal landmark bills
+    votes = generateMockForRep(openStatesIdParam ?? name, { includeLandmark: false }).bills;
   }
 
   return Response.json({ openStatesId, votes, votesDataSource: 'openstates', errors });

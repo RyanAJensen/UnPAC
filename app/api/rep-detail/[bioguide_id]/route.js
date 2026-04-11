@@ -1,4 +1,4 @@
-import { getMemberDetail, getSponsoredLegislation, getCosponsoredLegislation, getMemberVotes } from '@/lib/congressApi';
+import { getMemberDetail, getSponsoredLegislation, getCosponsoredLegislation, getLandmarkVotes, getRecentFloorVotes } from '@/lib/congressApi';
 import { findCandidate, getPrincipalCommittee, getContributions, getTotalRaised, inferFECOffice } from '@/lib/fecApi';
 import { categorizeEmployers, aggregateBySector } from '@/lib/industryCategorizer';
 import { computeInfluenceScore } from '@/lib/influenceScore';
@@ -8,15 +8,15 @@ import { generateMockForRep } from '@/lib/mockData';
 export async function GET(request, { params }) {
   const { bioguide_id } = await params;
   const { searchParams } = new URL(request.url);
-  const repName = searchParams.get('name') ?? '';
-  const stateCode = searchParams.get('state') ?? '';
+  const repName   = searchParams.get('name')   ?? '';
+  const stateCode = searchParams.get('state')  ?? '';
   const officeTitle = searchParams.get('office') ?? '';
-  const fecId = searchParams.get('fecId') ?? null;
+  const fecId     = searchParams.get('fecId')  ?? null;
 
   const errors = [];
-  let memberDetail = null;
-  let votes = null;
-  let finance = null;
+  let memberDetail  = null;
+  let votes         = null;
+  let finance       = null;
   let influenceScore = null;
 
   // Run Congress.gov and FEC in parallel
@@ -31,20 +31,20 @@ export async function GET(request, { params }) {
   // Congress.gov results
   if (congressResult.status === 'fulfilled') {
     memberDetail = congressResult.value.memberDetail;
-    votes = congressResult.value.votes;
+    votes        = congressResult.value.votes;
   } else {
     errors.push({ source: 'congress.gov', message: congressResult.reason?.message ?? 'Unknown error' });
     memberDetail = null;
-    votes = mock.bills;
+    votes        = mock.bills;
   }
 
   // FEC results
   if (fecResult.status === 'fulfilled') {
-    finance = fecResult.value;
+    finance        = fecResult.value;
     influenceScore = computeInfluenceScore(finance?.sectors ?? []);
   } else {
     errors.push({ source: 'fec', message: fecResult.reason?.message ?? 'Unknown error' });
-    finance = mock.finance;
+    finance        = mock.finance;
     influenceScore = computeInfluenceScore(mock.finance.sectors);
   }
 
@@ -60,18 +60,28 @@ export async function GET(request, { params }) {
 }
 
 async function fetchCongressData(bioguideId) {
-  // Fetch sponsored, cosponsored, and actual floor votes in parallel.
-  // Cosponsored and votes use .catch(() => []) so a 404/timeout never breaks the whole request.
-  const [memberDetail, sponsored, cosponsored, memberVotes] = await Promise.all([
-    getMemberDetail(bioguideId),
+  // Fetch member detail first — we need chamber to route landmark vote lookups correctly.
+  const memberDetail = await getMemberDetail(bioguideId);
+  const { chamber, state } = memberDetail;
+
+  // Extract last name for Senate XML fallback matching
+  // directOrderName is "FirstName LastName"; take the last token
+  const nameParts = (memberDetail.name ?? '').trim().split(/\s+/);
+  const lastName  = nameParts.at(-1) ?? '';
+
+  // Fetch everything else in parallel.
+  // Landmark votes use official House Clerk / Senate.gov XML (accurate).
+  // Recent floor votes use GovTrack (best-effort, non-landmark).
+  const [sponsored, cosponsored, landmarkVotes, recentVotes] = await Promise.all([
     getSponsoredLegislation(bioguideId),
     getCosponsoredLegislation(bioguideId).catch(() => []),
-    getMemberVotes(bioguideId).catch(() => []),
+    getLandmarkVotes({ bioguideId, chamber, lastName, state }).catch(() => []),
+    getRecentFloorVotes(bioguideId).catch(() => []),
   ]);
 
   return {
     memberDetail,
-    votes: buildVoteRecords(sponsored, cosponsored, memberVotes),
+    votes: buildVoteRecords(sponsored, cosponsored, landmarkVotes, recentVotes),
   };
 }
 
@@ -105,46 +115,64 @@ async function fetchFECData(repName, stateCode, officeTitle, fecId) {
 }
 
 /**
- * Merge all three legislative activity types into one sorted list.
+ * Merge all legislative activity into one sorted list.
  *
- * Weights (carried through to conflict detection):
- *   Sponsored   = 1.0  — authored and introduced the bill (strongest signal)
- *   Cosponsored = 0.5  — explicitly added their name in support
- *   Yes / No    = 0.3  — floor vote (meaningful but applies to all members)
+ * Weights:
+ *   Sponsored   = 1.0  — authored and introduced (strongest signal)
+ *   Cosponsored = 0.5  — explicit co-author support
+ *   Yes / No    = 0.3  — floor vote
  *   Not Voting  = 0.1  — abstained
  *   Present     = 0.1  — present but did not vote
  */
-function buildVoteRecords(sponsored, cosponsored, memberVotes) {
+function buildVoteRecords(sponsored, cosponsored, landmarkVotes, recentVotes) {
   const sponsoredEntries = sponsored.map(bill => ({
-    billId:    bill.billId ?? '',
-    billTitle: bill.billTitle ?? 'Untitled',
-    category:  categorize(bill.billTitle ?? ''),
-    vote:      'Sponsored',
-    weight:    1.0,
-    date:      bill.date ?? null,
+    billId:     bill.billId ?? '',
+    billTitle:  bill.billTitle ?? 'Untitled',
+    category:   categorize(bill.billTitle ?? ''),
+    vote:       'Sponsored',
+    weight:     1.0,
+    date:       bill.date ?? null,
+    isLandmark: false,
   }));
 
   const cosponsoredEntries = cosponsored.map(bill => ({
-    billId:    bill.billId ?? '',
-    billTitle: bill.billTitle ?? 'Untitled',
-    category:  categorize(bill.billTitle ?? ''),
-    vote:      'Cosponsored',
-    weight:    0.5,
-    date:      bill.date ?? null,
+    billId:     bill.billId ?? '',
+    billTitle:  bill.billTitle ?? 'Untitled',
+    category:   categorize(bill.billTitle ?? ''),
+    vote:       'Cosponsored',
+    weight:     0.5,
+    date:       bill.date ?? null,
+    isLandmark: false,
   }));
 
-  const voteEntries = memberVotes.map(v => ({
-    billId:    null,
-    billTitle: v.billTitle ?? 'Floor Vote',
-    category:  categorize(v.billTitle ?? ''),
-    vote:      v.position,
-    weight:    (v.position === 'Yes' || v.position === 'No') ? 0.3 : 0.1,
-    date:      v.date ?? null,
+  const landmarkEntries = landmarkVotes.map(v => ({
+    billId:     null,
+    billTitle:  v.billTitle,
+    category:   v.category,
+    vote:       v.position,
+    weight:     (v.position === 'Yes' || v.position === 'No') ? 0.3 : 0.1,
+    date:       v.date ?? null,
+    isLandmark: true,
   }));
+
+  // Drop any recent floor votes whose title duplicates a landmark
+  const landmarkTitles = new Set(landmarkVotes.map(v => v.billTitle));
+  const recentEntries = recentVotes
+    .filter(v => !landmarkTitles.has(v.billTitle))
+    .map(v => ({
+      billId:     null,
+      billTitle:  v.billTitle ?? 'Floor Vote',
+      category:   categorize(v.billTitle ?? ''),
+      vote:       v.position,
+      weight:     (v.position === 'Yes' || v.position === 'No') ? 0.3 : 0.1,
+      date:       v.date ?? null,
+      isLandmark: false,
+    }));
 
   return [
     ...sponsoredEntries,
     ...cosponsoredEntries,
-    ...voteEntries,
+    ...landmarkEntries,
+    ...recentEntries,
   ].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
 }
