@@ -1,6 +1,6 @@
 import { findStateLegislator, getSponsoredBills } from '@/lib/openStatesApi';
 import { categorize } from '@/lib/voteCategories';
-import { MOCK_OPENSTATES_BILLS } from '@/lib/mockData';
+import { generateMockForRep } from '@/lib/mockData';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -11,16 +11,6 @@ export async function GET(request) {
 
   if (!name && !openStatesIdParam) {
     return Response.json({ error: 'name or openStatesId is required' }, { status: 400 });
-  }
-
-  const useMock = !process.env.OPENSTATES_API_KEY || process.env.OPENSTATES_API_KEY === 'your_openstates_api_key_here';
-  if (useMock) {
-    return Response.json({
-      openStatesId: openStatesIdParam,
-      votes: buildVotes(MOCK_OPENSTATES_BILLS),
-      votesDataSource: 'openstates',
-      errors: [{ source: 'openstates', message: 'Using mock data — set OPENSTATES_API_KEY' }],
-    });
   }
 
   const errors = [];
@@ -34,7 +24,7 @@ export async function GET(request) {
       if (!person) {
         return Response.json({
           openStatesId: null,
-          votes: null,
+          votes: [],
           votesDataSource: null,
           errors: [{ source: 'openstates', message: `Could not find "${name}" in ${state}` }],
         });
@@ -44,14 +34,14 @@ export async function GET(request) {
 
     const bills = await getSponsoredBills(openStatesId);
     if (bills.length === 0) {
-      errors.push({ source: 'openstates', message: 'No sponsored bills found — showing sample data' });
-      votes = buildVotes(MOCK_OPENSTATES_BILLS);
+      errors.push({ source: 'openstates', message: 'No sponsored bills found — showing representative sample' });
+      votes = generateMockForRep(openStatesId).bills;
     } else {
       votes = buildVotes(bills);
     }
   } catch (err) {
     errors.push({ source: 'openstates', message: err.message });
-    votes = buildVotes(MOCK_OPENSTATES_BILLS);
+    votes = generateMockForRep(openStatesIdParam ?? name).bills;
   }
 
   return Response.json({ openStatesId, votes, votesDataSource: 'openstates', errors });

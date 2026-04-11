@@ -3,12 +3,7 @@ import { findCandidate, getPrincipalCommittee, getContributions, getTotalRaised,
 import { categorizeEmployers, aggregateBySector } from '@/lib/industryCategorizer';
 import { computeInfluenceScore } from '@/lib/influenceScore';
 import { categorize } from '@/lib/voteCategories';
-import {
-  MOCK_SPONSORED_LEGISLATION,
-  MOCK_FEC_SECTORS,
-  MOCK_FEC_CONTRIBUTORS,
-  MOCK_MEMBER_DETAIL,
-} from '@/lib/mockData';
+import { generateMockForRep } from '@/lib/mockData';
 
 export async function GET(request, { params }) {
   const { bioguide_id } = await params;
@@ -30,14 +25,16 @@ export async function GET(request, { params }) {
     fetchFECData(repName, stateCode, officeTitle, fecId),
   ]);
 
+  const mock = generateMockForRep(bioguide_id);
+
   // Congress.gov results
   if (congressResult.status === 'fulfilled') {
     memberDetail = congressResult.value.memberDetail;
     votes = congressResult.value.votes;
   } else {
     errors.push({ source: 'congress.gov', message: congressResult.reason?.message ?? 'Unknown error' });
-    memberDetail = MOCK_MEMBER_DETAIL;
-    votes = buildVoteRecords(MOCK_SPONSORED_LEGISLATION);
+    memberDetail = null;
+    votes = mock.bills; // seeded per rep
   }
 
   // FEC results
@@ -46,13 +43,8 @@ export async function GET(request, { params }) {
     influenceScore = computeInfluenceScore(finance?.sectors ?? []);
   } else {
     errors.push({ source: 'fec', message: fecResult.reason?.message ?? 'Unknown error' });
-    finance = {
-      cycle: '2024',
-      totalRaised: MOCK_FEC_SECTORS.reduce((s, x) => s + x.amount, 0),
-      sectors: MOCK_FEC_SECTORS,
-      topContributors: MOCK_FEC_CONTRIBUTORS,
-    };
-    influenceScore = computeInfluenceScore(MOCK_FEC_SECTORS);
+    finance = mock.finance; // seeded per rep
+    influenceScore = computeInfluenceScore(mock.finance.sectors);
   }
 
   return Response.json({
@@ -67,14 +59,6 @@ export async function GET(request, { params }) {
 }
 
 async function fetchCongressData(bioguideId) {
-  const useMock = !process.env.CONGRESS_API_KEY || process.env.CONGRESS_API_KEY === 'your_congress_api_key_here';
-  if (useMock) {
-    return {
-      memberDetail: MOCK_MEMBER_DETAIL,
-      votes: buildVoteRecords(MOCK_SPONSORED_LEGISLATION),
-    };
-  }
-
   const [memberDetail, bills] = await Promise.all([
     getMemberDetail(bioguideId),
     getSponsoredLegislation(bioguideId),

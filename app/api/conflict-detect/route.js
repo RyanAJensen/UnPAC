@@ -1,9 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 export async function POST(request) {
   try {
+    const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+    if (!apiKey) {
+      return Response.json({ error: 'ANTHROPIC_API_KEY not configured — restart the dev server after editing .env.local' }, { status: 503 });
+    }
+    const client = new Anthropic({ apiKey });
     const { repName, votes, finance } = await request.json();
 
     if (!votes?.length) {
