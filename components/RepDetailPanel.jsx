@@ -123,7 +123,11 @@ export default function RepDetailPanel({ rep }) {
         </div>
       ) : rep.level === 'local' ? (
         <div className="p-4">
-          <DataGapBanner source="Voting records and campaign finance" reason="not available for local representatives" />
+          <DataGapBanner
+            title="No data available for local officials"
+            reason="Local representatives are not required to file voting records or campaign finance disclosures with any national database."
+            detail="Federal law only mandates disclosure for U.S. Congress members (FEC) and, partially, state legislators (OpenStates). City council members, mayors, and school board officials report to individual county or municipal agencies — over 3,000 jurisdictions — none of which are aggregated in a single accessible API."
+          />
         </div>
       ) : (
         <>
@@ -140,7 +144,11 @@ export default function RepDetailPanel({ rep }) {
 
           <div className="p-4">
             {activeTab === 'legislation' && (
-              <VotingTable votes={detail?.votes} dataSource={detail?.votesDataSource} />
+              <VotingTable
+                votes={detail?.votes}
+                dataSource={detail?.votesDataSource}
+                level={rep.level}
+              />
             )}
             {activeTab === 'finance' && (
               <div className="space-y-4">
@@ -153,7 +161,11 @@ export default function RepDetailPanel({ rep }) {
                   <ContributorsList contributors={detail?.finance?.topContributors} />
                 </div>
                 {rep.level !== 'federal' && (
-                  <DataGapBanner source="Federal campaign finance" reason="only available for U.S. Congress members" />
+                  <DataGapBanner
+                    title="Campaign finance not available for state legislators"
+                    reason="The FEC only tracks candidates for federal office (Senate, House, President)."
+                    detail="State legislators file campaign finance reports with their individual state election agency — 50 separate systems with inconsistent formats and access rules. No single free API aggregates this data nationally. Organizations like FollowTheMoney.org manually compile some of it, but without a public API we can't reliably pull it here."
+                  />
                 )}
               </div>
             )}

@@ -48,12 +48,22 @@ function VoteRow({ v }) {
   );
 }
 
-export default function VotingTable({ votes, dataSource }) {
+export default function VotingTable({ votes, dataSource, level }) {
   if (!votes || votes.length === 0) {
+    const isFederal = level === 'federal';
     return (
       <DataGapBanner
-        source="Voting/sponsorship"
-        reason="no data available from this source"
+        title={isFederal ? 'No sponsored legislation found' : 'No sponsored bills found'}
+        reason={
+          isFederal
+            ? 'Congress.gov did not return any sponsored or co-sponsored legislation for this member.'
+            : 'OpenStates did not return any sponsored bills for this state legislator.'
+        }
+        detail={
+          isFederal
+            ? 'This can happen for newly elected members, members who primarily vote on others\' bills, or when the Congress.gov API key has not yet activated (keys can take up to 24 hours). Data shown here is limited to the current and prior Congress.'
+            : 'OpenStates aggregates bill data from all 50 state legislatures, but coverage varies by state and session. Some states have limited digital records, and newly introduced bills may not yet be indexed. Try again in a few minutes if this member was recently looked up.'
+        }
       />
     );
   }
