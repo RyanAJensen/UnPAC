@@ -31,7 +31,7 @@ export default function ResultsPage() {
   if (!result) return (
     <div className="h-screen flex flex-col bg-page">
       <nav className="shrink-0 border-b border-white/10 px-6 py-3 flex items-center justify-between" style={{ backgroundColor: '#0d1f36' }}>
-        <span className="text-lg font-black tracking-tight text-white">Rep<span style={{ color: '#e03040' }}>Watch</span></span>
+        <span className="text-lg font-black tracking-tight text-white">Un<span style={{ color: '#e03040' }}>PAC</span></span>
       </nav>
       <div className="flex-1 p-6"><LoadingSkeleton count={6} /></div>
     </div>
@@ -49,7 +49,7 @@ export default function ResultsPage() {
       {/* Nav */}
       <nav className="shrink-0 border-b border-white/10 px-6 py-3 flex items-center gap-3" style={{ backgroundColor: '#0d1f36' }}>
         <button onClick={() => router.push('/')} className="text-lg font-black tracking-tight text-white hover:opacity-80 transition-opacity shrink-0">
-          Rep<span style={{ color: '#e03040' }}>Watch</span>
+          Un<span style={{ color: '#e03040' }}>PAC</span>
         </button>
         <div className="flex-1 flex items-center gap-2 min-w-0 hidden sm:flex">
           <span className="text-white/20">/</span>

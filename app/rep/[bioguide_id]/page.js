@@ -33,7 +33,7 @@ export default async function RepPage({ params }) {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
       <div className="max-w-3xl mx-auto px-4 py-10">
         <a href="/" className="text-sm text-indigo-600 hover:text-indigo-800 mb-6 flex items-center gap-1">
-          ← RepWatch Home
+          ← UnPAC Home
         </a>
         <RepDetailPanel rep={repStub} />
       </div>

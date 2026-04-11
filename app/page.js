@@ -13,10 +13,10 @@ export default function Home() {
       {/* Nav */}
       <nav className="shrink-0 border-b border-white/10 px-6 py-3 flex items-center justify-between">
         <span className="text-lg font-black tracking-tight text-white">
-          Rep<span style={{ color: '#e03040' }}>Watch</span>
+          Un<span style={{ color: '#e03040' }}>PAC</span>
         </span>
         <span className="text-xs text-white/35 font-medium tracking-widest uppercase hidden sm:block">
-          Civic Transparency Tool
+          Follow the money
         </span>
       </nav>
 
