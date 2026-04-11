@@ -4,6 +4,7 @@ import PartyBadge from './PartyBadge';
 import VotingTable from './VotingTable';
 import DonationBubbleChart from './DonationBubbleChart';
 import ContributorsList from './ContributorsList';
+import InfluenceScore from './InfluenceScore';
 import DataGapBanner from './DataGapBanner';
 import { computeVotingInfluenceScore } from '@/lib/influenceScore';
 
@@ -11,24 +12,6 @@ function getInitials(name) {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function ScoreBar({ label, score }) {
-  if (score == null) return null;
-  const color = score > 66 ? '#dc2626' : score > 33 ? '#d97706' : '#16a34a';
-  const tier = score > 66 ? 'High' : score > 33 ? 'Moderate' : 'Low';
-  return (
-    <div className="flex-1 min-w-0">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
-        <span className="text-xs font-bold" style={{ color }}>{score} <span className="font-normal text-gray-400">/ 100</span></span>
-      </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: color }} />
-      </div>
-      <div className="text-[10px] mt-0.5" style={{ color }}>{tier}</div>
-    </div>
-  );
 }
 
 export default function RepDetailPanel({ rep }) {
@@ -118,14 +101,14 @@ export default function RepDetailPanel({ rep }) {
           </div>
         </div>
 
-        {/* Score bars — shown once data loads */}
+        {/* Influence scores — shown once data loads */}
         {!loading && (detail?.influenceScore != null || votingScore != null) && (
-          <div className="flex gap-4 mt-3 pt-3 border-t border-gray-50">
+          <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100">
             {detail?.influenceScore != null && (
-              <ScoreBar label="Legislative Influence" score={detail.influenceScore} />
+              <InfluenceScore score={detail.influenceScore} title="Legislative Influence" />
             )}
             {votingScore != null && (
-              <ScoreBar label="Voting Influence" score={votingScore} />
+              <InfluenceScore score={votingScore} title="Voting Influence" />
             )}
           </div>
         )}
