@@ -114,7 +114,10 @@ export default function AddressInput() {
         <button
           type="submit"
           disabled={loading || isFormEmpty}
-          className="w-full py-2.5 bg-navy-800 hover:bg-navy-700 active:bg-navy-900 text-white text-sm font-semibold rounded-lg disabled:opacity-40 transition-colors"
+          className="w-full py-2.5 text-white text-sm font-semibold rounded-lg disabled:opacity-40 transition-colors"
+          style={{ background: '#cc2936' }}
+          onMouseEnter={e => e.currentTarget.style.background = '#b91c1c'}
+          onMouseLeave={e => e.currentTarget.style.background = '#cc2936'}
         >
           {loading ? 'Looking up…' : 'Find My Representatives'}
         </button>

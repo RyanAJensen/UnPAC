@@ -8,31 +8,34 @@ const FEATURES = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #0d1f36 0%, #1a3356 60%, #243d6b 100%)' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(150deg, #0d1f36 0%, #1a3356 45%, #7f1d1d 100%)' }}>
 
       {/* Nav */}
       <nav className="shrink-0 border-b border-white/10 px-6 py-3.5 flex items-center gap-3">
-        <span className="text-xl font-extrabold text-white tracking-tight">RepWatch</span>
-        <span className="hidden sm:block text-white/40 text-xs font-medium tracking-wide uppercase">Civic Transparency</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xl font-extrabold text-white tracking-tight">Rep</span>
+          <span className="text-xl font-extrabold tracking-tight" style={{ color: '#e03040' }}>Watch</span>
+        </div>
+        <span className="hidden sm:block text-white/40 text-xs font-medium tracking-wide uppercase ml-1">Civic Transparency</span>
       </nav>
 
-      {/* Body — split on lg, stacked on mobile */}
+      {/* Body */}
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
           {/* Left: hero */}
           <div>
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1 mb-6">
+            <div className="inline-flex items-center gap-2 border border-white/20 rounded-full px-3 py-1 mb-6" style={{ background: 'rgba(255,255,255,0.07)' }}>
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               <span className="text-xs text-white/80 font-medium">Free · No account required</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-[1.1] mb-5">
               Know who really<br />
-              <span style={{ color: '#e8860c' }}>represents you.</span>
+              <span style={{ color: '#e03040' }}>represents you.</span>
             </h1>
 
-            <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-8">
+            <p className="text-white/65 text-base sm:text-lg leading-relaxed mb-8">
               Enter your address to see every federal, state, and local representative — what they vote for, and who pays them to do it.
             </p>
 
@@ -40,24 +43,27 @@ export default function Home() {
             <div className="space-y-3">
               {FEATURES.map(f => (
                 <div key={f.label} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-base shrink-0">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
                     {f.icon}
                   </div>
                   <div>
                     <span className="text-sm font-semibold text-white">{f.label}</span>
-                    <span className="text-white/50 text-sm"> — {f.desc}</span>
+                    <span className="text-white/45 text-sm"> — {f.desc}</span>
                   </div>
                 </div>
               ))}
             </div>
 
-            <p className="mt-8 text-xs text-white/30">
-              Data from Congress.gov · FEC · OpenStates · US Census Bureau
-            </p>
+            <div className="mt-8 flex items-center gap-2">
+              <div className="w-5 h-px bg-white/20" />
+              <p className="text-xs text-white/30">
+                Congress.gov · FEC · OpenStates · US Census Bureau
+              </p>
+            </div>
           </div>
 
           {/* Right: form card */}
-          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 border border-white/10">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8" style={{ borderTop: '3px solid #cc2936' }}>
             <AddressInput />
           </div>
 
