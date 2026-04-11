@@ -6,15 +6,17 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const name = searchParams.get('name') ?? '';
   const state = searchParams.get('state') ?? '';
+  // openStatesId is passed directly from the geo lookup — skip the name search if present
+  const openStatesIdParam = searchParams.get('openStatesId') ?? null;
 
-  if (!name || !state) {
-    return Response.json({ error: 'name and state are required' }, { status: 400 });
+  if (!name && !openStatesIdParam) {
+    return Response.json({ error: 'name or openStatesId is required' }, { status: 400 });
   }
 
   const useMock = !process.env.OPENSTATES_API_KEY || process.env.OPENSTATES_API_KEY === 'your_openstates_api_key_here';
   if (useMock) {
     return Response.json({
-      openStatesId: null,
+      openStatesId: openStatesIdParam,
       votes: buildVotes(MOCK_OPENSTATES_BILLS),
       votesDataSource: 'openstates',
       errors: [{ source: 'openstates', message: 'Using mock data — set OPENSTATES_API_KEY' }],
@@ -22,22 +24,31 @@ export async function GET(request) {
   }
 
   const errors = [];
-  let openStatesId = null;
+  let openStatesId = openStatesIdParam;
   let votes = null;
 
   try {
-    const person = await findStateLegislator(name, state);
-    if (!person) {
-      return Response.json({
-        openStatesId: null,
-        votes: null,
-        votesDataSource: null,
-        errors: [{ source: 'openstates', message: `Could not find "${name}" in ${state}` }],
-      });
+    // If we don't already have the ID, look it up by name
+    if (!openStatesId) {
+      const person = await findStateLegislator(name, state);
+      if (!person) {
+        return Response.json({
+          openStatesId: null,
+          votes: null,
+          votesDataSource: null,
+          errors: [{ source: 'openstates', message: `Could not find "${name}" in ${state}` }],
+        });
+      }
+      openStatesId = person.id;
     }
-    openStatesId = person.id;
-    const bills = await getSponsoredBills(person.id);
-    votes = buildVotes(bills);
+
+    const bills = await getSponsoredBills(openStatesId);
+    if (bills.length === 0) {
+      errors.push({ source: 'openstates', message: 'No sponsored bills found — showing sample data' });
+      votes = buildVotes(MOCK_OPENSTATES_BILLS);
+    } else {
+      votes = buildVotes(bills);
+    }
   } catch (err) {
     errors.push({ source: 'openstates', message: err.message });
     votes = buildVotes(MOCK_OPENSTATES_BILLS);
