@@ -25,7 +25,7 @@ function VoteRow({ v }) {
   const voteCls = VOTE_STYLES[v.vote] ?? 'text-gray-500';
 
   return (
-    <div className={`py-3 flex items-start gap-3 ${v.isLandmark ? 'bg-gold-50 -mx-1 px-1 rounded-lg' : ''}`}>
+    <div className={`py-3 px-3 flex items-start gap-3 ${v.isLandmark ? 'bg-gold-50 rounded-lg' : ''}`}>
       <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded border font-medium mt-0.5 ${catCls}`}>
         {v.category}
       </span>
@@ -90,6 +90,21 @@ export default function VotingTable({ votes, dataSource, level }) {
         ))}
       </div>
 
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 pb-3 border-b border-gray-100">
+        <span className="text-xs text-gray-400 font-medium">Vote weight:</span>
+        <span className="text-xs text-navy-700 font-bold">Sponsored</span>
+        <span className="text-xs text-blue-700 font-semibold">Cosponsored</span>
+        <span className="text-xs text-green-700 font-semibold">Yes</span>
+        <span className="text-xs text-red-700 font-semibold">No</span>
+        <span className="text-xs text-gray-400">Not Voting</span>
+        {dataSource && (
+          <span className="text-xs text-gray-400 ml-auto">
+            Source: {dataSource === 'congress.gov' ? 'Congress.gov + GovTrack' : 'OpenStates'}
+          </span>
+        )}
+      </div>
+
       {/* Key Votes section header (if any) */}
       {landmark.length > 0 && (
         <div className="flex items-center gap-2 mb-2">
@@ -105,7 +120,7 @@ export default function VotingTable({ votes, dataSource, level }) {
           return (
             <div key={i}>
               {isFirstRegular && (
-                <div className="flex items-center gap-2 py-2">
+                <div className="flex items-center gap-2 py-2 px-3">
                   <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">All Activity</span>
                   <div className="flex-1 h-px bg-gray-100" />
                 </div>
@@ -114,21 +129,6 @@ export default function VotingTable({ votes, dataSource, level }) {
             </div>
           );
         })}
-      </div>
-
-      {/* Legend + source */}
-      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <span className="text-xs text-gray-400">Weight:</span>
-        <span className="text-xs text-navy-700 font-bold">Sponsored</span>
-        <span className="text-xs text-blue-700 font-semibold">Cosponsored</span>
-        <span className="text-xs text-green-700 font-semibold">Yes</span>
-        <span className="text-xs text-red-700 font-semibold">No</span>
-        <span className="text-xs text-gray-400">Not Voting</span>
-        {dataSource && (
-          <span className="text-xs text-gray-400 ml-auto">
-            Source: {dataSource === 'congress.gov' ? 'Congress.gov + GovTrack' : 'OpenStates'}
-          </span>
-        )}
       </div>
     </div>
   );

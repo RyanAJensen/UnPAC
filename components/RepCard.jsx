@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import PartyBadge from './PartyBadge';
 
 function getInitials(name) {
   const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
@@ -15,9 +14,17 @@ const PARTY_BORDER = {
   L: 'border-l-yellow-500',
 };
 
+const PARTY_BADGE = {
+  D: { bg: '#1d4ed8', label: 'Dem' },
+  R: { bg: '#dc2626', label: 'Rep' },
+  I: { bg: '#6b7280', label: 'Ind' },
+  L: { bg: '#ca8a04', label: 'Lib' },
+};
+
 export default function RepCard({ rep, onClick, isExpanded }) {
   const [imgError, setImgError] = useState(false);
   const leftBorder = PARTY_BORDER[rep.party] ?? 'border-l-gray-300';
+  const badge = PARTY_BADGE[rep.party];
 
   return (
     <button
@@ -25,33 +32,40 @@ export default function RepCard({ rep, onClick, isExpanded }) {
       className={`w-full text-left rounded-lg border border-l-4 transition-all
         ${leftBorder}
         ${isExpanded
-          ? 'border-navy-600 bg-navy-50 shadow-sm'
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+          ? 'border-gray-300 bg-indigo-50 shadow-sm'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
         }`}
     >
-      <div className="flex items-center gap-3 px-3 py-3">
+      <div className="flex items-start gap-2.5 px-2.5 py-2.5">
+        {/* Photo / initials */}
         {rep.photoUrl && !imgError ? (
           <img
             src={rep.photoUrl}
             alt={rep.name}
-            className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0"
+            className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0 mt-0.5"
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-navy-700 to-navy-800 flex items-center justify-center shrink-0 text-white font-bold text-xs select-none">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-xs select-none mt-0.5" style={{ background: '#1a3356' }}>
             {getInitials(rep.name)}
           </div>
         )}
 
+        {/* Text */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-semibold text-gray-900 text-sm leading-tight">{rep.name}</span>
-            <PartyBadge party={rep.party} />
+          <div className="flex items-start gap-1.5 flex-wrap">
+            <span className="font-semibold text-gray-900 text-sm leading-snug">{rep.name}</span>
+            {badge && (
+              <span
+                className="shrink-0 text-[10px] font-bold text-white px-1 py-0.5 rounded leading-none mt-0.5"
+                style={{ background: badge.bg }}
+              >
+                {badge.label}
+              </span>
+            )}
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 leading-snug truncate">{rep.office}</p>
+          <p className="text-xs text-gray-500 mt-0.5 leading-snug">{rep.office}</p>
         </div>
-
-        <span className="text-gray-400 text-xs shrink-0">{isExpanded ? '▲' : '▼'}</span>
       </div>
     </button>
   );

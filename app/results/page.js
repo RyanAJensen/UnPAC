@@ -68,7 +68,7 @@ export default function ResultsPage() {
       <div className="flex-1 flex overflow-hidden">
 
         {/* Sidebar — scrolls independently */}
-        <div className="w-56 shrink-0 border-r border-gray-200 bg-white overflow-y-auto">
+        <div className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto">
           <div className="p-3 space-y-4">
             {LEVEL_ORDER.map(level => {
               const reps = repsByLevel[level];
