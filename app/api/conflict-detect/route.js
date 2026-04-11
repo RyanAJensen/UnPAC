@@ -19,13 +19,23 @@ export async function POST(request) {
       ? finance.sectors.slice(0, 8).map(s => `- ${s.sector}: $${s.amount.toLocaleString()} (${s.pct}%)`).join('\n')
       : '(No campaign finance data available for this representative)';
 
-    const votesText = votes.slice(0, 20)
-      .map(v => `- [${v.category}] ${v.date ?? 'n/d'}: "${v.billTitle}" — ${v.vote}`)
+    // Sort by weight descending so the strongest signals appear first in the prompt
+    const sortedVotes = [...votes].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0));
+    const votesText = sortedVotes.slice(0, 30)
+      .map(v => {
+        const weightLabel =
+          v.vote === 'Sponsored'   ? '★★★ Sponsored'   :
+          v.vote === 'Cosponsored' ? '★★  Cosponsored' :
+          v.vote === 'Yes'         ? '★   Voted Yes'    :
+          v.vote === 'No'          ? '★   Voted No'     :
+                                     '·   ' + (v.vote ?? 'Unknown');
+        return `- [${v.category}] ${v.date ?? 'n/d'}: "${v.billTitle}" — ${weightLabel}`;
+      })
       .join('\n');
 
     const donorInstruction = hasSectors
-      ? 'Identify factual misalignments between a legislator\'s voting/sponsorship record and their campaign donor industries. Only flag conflicts you can tie to specific legislation AND specific donor sectors.'
-      : 'Analyze this legislator\'s voting/sponsorship record for notable patterns, ideological consistency, or policy priorities. Note that no donor data is available.';
+      ? 'Identify factual misalignments between a legislator\'s legislative record and their campaign donor industries. Records are weighted: Sponsored bills (★★★) carry the most weight, Cosponsored (★★) less so, and floor votes (★) the least — weight this accordingly when assessing conflicts. Only flag conflicts you can tie to specific legislation AND specific donor sectors.'
+      : 'Analyze this legislator\'s legislative record for notable patterns, ideological consistency, or policy priorities. Records are weighted: Sponsored (★★★) > Cosponsored (★★) > floor votes (★). Note that no donor data is available.';
 
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',

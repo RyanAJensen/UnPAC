@@ -12,7 +12,8 @@ const CATEGORY_COLORS = {
 };
 
 const VOTE_STYLES = {
-  Sponsored:    'text-navy-700 font-semibold',
+  Sponsored:    'text-navy-700 font-bold',
+  Cosponsored:  'text-blue-700 font-semibold',
   Yes:          'text-green-700 font-semibold',
   No:           'text-red-700 font-semibold',
   'Not Voting': 'text-gray-400',
@@ -67,14 +68,19 @@ export default function VotingTable({ votes, dataSource }) {
         ))}
       </div>
 
-      {dataSource && (
-        <p className="text-xs text-gray-400 mt-4 pt-3 border-t border-gray-100">
-          Source:{' '}
-          {dataSource === 'congress.gov'
-            ? 'Congress.gov (sponsored legislation)'
-            : 'OpenStates (sponsored bills)'}
-        </p>
-      )}
+      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span className="text-xs text-gray-400">Weight:</span>
+        <span className="text-xs text-navy-700 font-bold">Sponsored</span>
+        <span className="text-xs text-blue-700 font-semibold">Cosponsored</span>
+        <span className="text-xs text-green-700 font-semibold">Yes</span>
+        <span className="text-xs text-red-700 font-semibold">No</span>
+        <span className="text-xs text-gray-400">Not Voting</span>
+        {dataSource && (
+          <span className="text-xs text-gray-400 ml-auto">
+            Source: {dataSource === 'congress.gov' ? 'Congress.gov + GovTrack' : 'OpenStates'}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

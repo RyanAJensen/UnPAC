@@ -1,16 +1,25 @@
-import { findStateLegislator, getSponsoredBills } from '@/lib/openStatesApi';
+import { findStateLegislator, getSponsoredBills, getCosponsoredBills } from '@/lib/openStatesApi';
 import { categorize } from '@/lib/voteCategories';
-import { generateMockForRep } from '@/lib/mockData';
+import { generateMockForRep, MOCK_OPENSTATES_BILLS, MOCK_OPENSTATES_COSPONSORED } from '@/lib/mockData';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const name = searchParams.get('name') ?? '';
   const state = searchParams.get('state') ?? '';
-  // openStatesId is passed directly from the geo lookup — skip the name search if present
   const openStatesIdParam = searchParams.get('openStatesId') ?? null;
 
   if (!name && !openStatesIdParam) {
     return Response.json({ error: 'name or openStatesId is required' }, { status: 400 });
+  }
+
+  const useMock = !process.env.OPENSTATES_API_KEY || process.env.OPENSTATES_API_KEY === 'your_openstates_api_key_here';
+  if (useMock) {
+    return Response.json({
+      openStatesId: openStatesIdParam,
+      votes: buildVotes(MOCK_OPENSTATES_BILLS, MOCK_OPENSTATES_COSPONSORED),
+      votesDataSource: 'openstates',
+      errors: [{ source: 'openstates', message: 'Using mock data — set OPENSTATES_API_KEY' }],
+    });
   }
 
   const errors = [];
@@ -18,7 +27,6 @@ export async function GET(request) {
   let votes = null;
 
   try {
-    // If we don't already have the ID, look it up by name
     if (!openStatesId) {
       const person = await findStateLegislator(name, state);
       if (!person) {
@@ -32,12 +40,17 @@ export async function GET(request) {
       openStatesId = person.id;
     }
 
-    const bills = await getSponsoredBills(openStatesId);
-    if (bills.length === 0) {
-      errors.push({ source: 'openstates', message: 'No sponsored bills found — showing representative sample' });
+    // Fetch sponsored and cosponsored bills in parallel
+    const [sponsored, cosponsored] = await Promise.all([
+      getSponsoredBills(openStatesId),
+      getCosponsoredBills(openStatesId).catch(() => []),
+    ]);
+
+    if (sponsored.length === 0 && cosponsored.length === 0) {
+      errors.push({ source: 'openstates', message: 'No bills found — showing representative sample' });
       votes = generateMockForRep(openStatesId).bills;
     } else {
-      votes = buildVotes(bills);
+      votes = buildVotes(sponsored, cosponsored);
     }
   } catch (err) {
     errors.push({ source: 'openstates', message: err.message });
@@ -47,13 +60,32 @@ export async function GET(request) {
   return Response.json({ openStatesId, votes, votesDataSource: 'openstates', errors });
 }
 
-function buildVotes(bills) {
-  return bills.map(b => ({
-    billId: b.identifier ?? b.billId ?? '',
+/**
+ * Weights:
+ *   Sponsored   = 1.0  (primary author)
+ *   Cosponsored = 0.5  (explicit support, lesser initiative)
+ */
+function buildVotes(sponsored, cosponsored = []) {
+  const sponsoredEntries = sponsored.map(b => ({
+    billId:    b.identifier ?? b.billId ?? '',
     billTitle: b.title ?? b.billTitle ?? 'Untitled',
-    category: categorize(b.title ?? b.billTitle ?? ''),
-    vote: 'Sponsored',
-    date: b.first_action_date ?? b.date ?? null,
-    description: null,
+    category:  categorize(b.title ?? b.billTitle ?? ''),
+    vote:      'Sponsored',
+    weight:    1.0,
+    date:      b.first_action_date ?? b.date ?? null,
   }));
+
+  const cosponsoredEntries = cosponsored.map(b => ({
+    billId:    b.identifier ?? b.billId ?? '',
+    billTitle: b.title ?? b.billTitle ?? 'Untitled',
+    category:  categorize(b.title ?? b.billTitle ?? ''),
+    vote:      'Cosponsored',
+    weight:    0.5,
+    date:      b.first_action_date ?? b.date ?? null,
+  }));
+
+  return [
+    ...sponsoredEntries,
+    ...cosponsoredEntries,
+  ].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
 }
