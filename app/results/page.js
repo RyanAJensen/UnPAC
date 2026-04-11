@@ -6,7 +6,7 @@ import RepDetailPanel from '@/components/RepDetailPanel';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 const LEVEL_ORDER = ['federal', 'state', 'local'];
-const LEVEL_LABELS = { federal: '🏛 Federal', state: '🏛 State', local: '🏙 Local' };
+const LEVEL_LABELS = { federal: 'Federal', state: 'State', local: 'Local' };
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -18,7 +18,6 @@ export default function ResultsPage() {
     if (!stored) { router.replace('/'); return; }
     const data = JSON.parse(stored);
     setResult(data);
-    // Auto-expand first federal rep
     const firstFederal = data.reps?.find(r => r.level === 'federal');
     if (firstFederal) setExpandedId(repKey(firstFederal));
   }, [router]);
@@ -33,8 +32,15 @@ export default function ResultsPage() {
   }
 
   if (!result) return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-6">
-      <LoadingSkeleton count={6} />
+    <main className="min-h-screen bg-page">
+      <nav className="bg-navy-900 border-b border-navy-700">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
+          <span className="text-lg font-extrabold text-white tracking-tight">RepWatch</span>
+        </div>
+      </nav>
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <LoadingSkeleton count={6} />
+      </div>
     </main>
   );
 
@@ -46,33 +52,65 @@ export default function ResultsPage() {
   const expandedRep = result.reps.find(r => repKey(r) === expandedId);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
-      <div className="max-w-6xl mx-auto px-4 py-10">
+    <main className="min-h-screen bg-page">
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <div>
-            <button onClick={() => router.push('/')} className="text-sm text-indigo-600 hover:text-indigo-800 mb-1 flex items-center gap-1">
-              ← New address
-            </button>
-            <h1 className="text-xl font-bold text-gray-900">
-              Representatives for <span className="text-indigo-700">{result.address}</span>
-            </h1>
-            <p className="text-sm text-gray-500">{result.reps.length} representatives found</p>
+      {/* Sticky nav */}
+      <nav className="bg-navy-900 border-b border-navy-700 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-5">
+          <button
+            onClick={() => router.push('/')}
+            className="text-base font-extrabold text-white tracking-tight shrink-0 hover:text-navy-100 transition-colors"
+          >
+            RepWatch
+          </button>
+
+          <span className="text-navy-700 hidden sm:block select-none">|</span>
+
+          <button
+            onClick={() => router.push('/')}
+            className="hidden sm:flex items-center gap-1 text-sm text-navy-200 hover:text-white transition-colors shrink-0"
+          >
+            ← New address
+          </button>
+
+          <div className="flex-1 min-w-0 hidden md:block">
+            <p className="text-xs text-navy-200 truncate">{result.address}</p>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: rep list by level */}
-          <div className="lg:col-span-1 space-y-6">
+          <span className="text-xs text-navy-200 shrink-0 ml-auto">
+            {result.reps.length} representatives
+          </span>
+        </div>
+      </nav>
+
+      {/* Mobile sub-bar */}
+      <div className="sm:hidden bg-navy-800 px-4 py-2 border-b border-navy-700">
+        <button
+          onClick={() => router.push('/')}
+          className="text-xs text-navy-100 hover:text-white flex items-center gap-1 mb-0.5"
+        >
+          ← New address
+        </button>
+        <p className="text-xs text-navy-200 truncate">{result.address}</p>
+      </div>
+
+      {/* Main content */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[290px_1fr] gap-6 items-start">
+
+          {/* Rep list */}
+          <div className="space-y-6">
             {LEVEL_ORDER.map(level => {
               const reps = repsByLevel[level];
               if (!reps?.length) return null;
               return (
                 <div key={level}>
-                  <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                    {LEVEL_LABELS[level]}
-                  </h2>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest shrink-0">
+                      {LEVEL_LABELS[level]}
+                    </h2>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
                   <div className="space-y-2">
                     {reps.map(rep => (
                       <RepCard
@@ -88,19 +126,21 @@ export default function ResultsPage() {
             })}
           </div>
 
-          {/* Right: expanded detail */}
-          <div className="lg:col-span-2">
+          {/* Detail panel */}
+          <div>
             {expandedRep ? (
               <RepDetailPanel key={repKey(expandedRep)} rep={expandedRep} />
             ) : (
-              <div className="flex items-center justify-center h-64 bg-white rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 text-sm">
-                Select a representative to see their details
+              <div className="flex flex-col items-center justify-center h-64 bg-white rounded-xl border-2 border-dashed border-gray-200 text-gray-400">
+                <div className="text-3xl mb-2">👆</div>
+                <p className="text-sm">Select a representative to view their details</p>
               </div>
             )}
           </div>
-        </div>
 
+        </div>
       </div>
+
     </main>
   );
 }

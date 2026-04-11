@@ -3,17 +3,17 @@ import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 import DataGapBanner from './DataGapBanner';
 
 const SECTOR_COLORS = {
-  Finance:     '#6366f1',
-  Health:      '#ec4899',
-  Energy:      '#f59e0b',
-  Defense:     '#64748b',
-  Technology:  '#0ea5e9',
-  Legal:       '#8b5cf6',
-  'Real Estate':'#10b981',
-  Agriculture: '#84cc16',
-  Media:       '#f97316',
-  'PAC/Dark Money': '#ef4444',
-  Other:       '#9ca3af',
+  Finance:          '#1e4276',
+  Health:           '#be185d',
+  Energy:           '#b45309',
+  Defense:          '#374151',
+  Technology:       '#0369a1',
+  Legal:            '#6d28d9',
+  'Real Estate':    '#065f46',
+  Agriculture:      '#3f6212',
+  Media:            '#9a3412',
+  'PAC/Dark Money': '#991b1b',
+  Other:            '#6b7280',
 };
 
 function CustomContent({ x, y, width, height, name, pct }) {

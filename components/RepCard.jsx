@@ -8,45 +8,50 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function InitialsCircle({ name }) {
-  return (
-    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shrink-0 text-white font-bold text-sm select-none">
-      {getInitials(name)}
-    </div>
-  );
-}
+const PARTY_BORDER = {
+  D: 'border-l-blue-600',
+  R: 'border-l-red-600',
+  I: 'border-l-gray-400',
+  L: 'border-l-yellow-500',
+};
 
 export default function RepCard({ rep, onClick, isExpanded }) {
   const [imgError, setImgError] = useState(false);
+  const leftBorder = PARTY_BORDER[rep.party] ?? 'border-l-gray-300';
 
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl border-2 transition-all hover:shadow-md ${
-        isExpanded
-          ? 'border-indigo-400 bg-indigo-50'
-          : 'border-gray-200 bg-white hover:border-indigo-300'
-      }`}
+      className={`w-full text-left rounded-lg border border-l-4 transition-all
+        ${leftBorder}
+        ${isExpanded
+          ? 'border-navy-600 bg-navy-50 shadow-sm'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+        }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3 px-3 py-3">
         {rep.photoUrl && !imgError ? (
           <img
             src={rep.photoUrl}
             alt={rep.name}
-            className="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0"
+            className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0"
             onError={() => setImgError(true)}
           />
         ) : (
-          <InitialsCircle name={rep.name} />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-navy-700 to-navy-800 flex items-center justify-center shrink-0 text-white font-bold text-xs select-none">
+            {getInitials(rep.name)}
+          </div>
         )}
+
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-semibold text-gray-900 text-sm">{rep.name}</span>
+            <span className="font-semibold text-gray-900 text-sm leading-tight">{rep.name}</span>
             <PartyBadge party={rep.party} />
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 leading-snug">{rep.office}</p>
+          <p className="text-xs text-gray-500 mt-0.5 leading-snug truncate">{rep.office}</p>
         </div>
-        <span className="text-gray-400 text-sm shrink-0 mt-1">{isExpanded ? '▲' : '▼'}</span>
+
+        <span className="text-gray-400 text-xs shrink-0">{isExpanded ? '▲' : '▼'}</span>
       </div>
     </button>
   );

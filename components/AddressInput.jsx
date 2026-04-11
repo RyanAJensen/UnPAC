@@ -24,8 +24,7 @@ export default function AddressInput() {
   async function handleSubmit(e) {
     e?.preventDefault();
     if (isFormEmpty) return;
-    const address = `${street.trim()}, ${city.trim()}, ${state} ${zip.trim()}`;
-    await lookup(address);
+    await lookup(`${street.trim()}, ${city.trim()}, ${state} ${zip.trim()}`);
   }
 
   async function handleDemo() {
@@ -48,41 +47,51 @@ export default function AddressInput() {
       }
       sessionStorage.setItem('repsResult', JSON.stringify(data));
       router.push('/results');
-    } catch (err) {
+    } catch {
       setError('Network error — please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  const inputClass =
-    'w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-40';
+  const field =
+    'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 ' +
+    'placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-navy-600 ' +
+    'focus:border-navy-600 disabled:opacity-50 transition-colors';
 
   return (
     <div className="space-y-4">
+      <p className="text-sm font-semibold text-gray-700">Your home address</p>
+
       <form onSubmit={handleSubmit} className="space-y-3">
+        {/* Street */}
         <input
           type="text"
           value={street}
           onChange={e => setStreet(e.target.value)}
           placeholder="Street Address"
-          className={inputClass}
+          className={field}
           disabled={loading}
+          autoComplete="street-address"
         />
-        <div className="flex gap-2">
+
+        {/* City / State / ZIP — stacks on mobile, inline on sm+ */}
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_6rem_7.5rem] gap-3">
           <input
             type="text"
             value={city}
             onChange={e => setCity(e.target.value)}
             placeholder="City"
-            className={`${inputClass} flex-1`}
+            className={field}
             disabled={loading}
+            autoComplete="address-level2"
           />
           <select
             value={state}
             onChange={e => setState(e.target.value)}
-            className={`${inputClass} w-24 shrink-0`}
+            className={field}
             disabled={loading}
+            autoComplete="address-level1"
           >
             <option value="">State</option>
             {US_STATES.map(s => (
@@ -93,41 +102,48 @@ export default function AddressInput() {
             type="text"
             value={zip}
             onChange={e => setZip(e.target.value)}
-            placeholder="ZIP"
-            className={`${inputClass} w-28 shrink-0`}
+            placeholder="ZIP Code"
+            className={field}
             disabled={loading}
             maxLength={10}
+            autoComplete="postal-code"
           />
         </div>
+
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading || isFormEmpty}
-          className="w-full px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition-colors"
+          className="w-full py-2.5 bg-navy-800 hover:bg-navy-700 active:bg-navy-900 text-white text-sm font-semibold rounded-lg disabled:opacity-40 transition-colors"
         >
-          {loading ? 'Looking up...' : 'Find My Reps'}
+          {loading ? 'Looking up…' : 'Find My Representatives'}
         </button>
       </form>
 
+      {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-xs text-gray-400">or</span>
+        <span className="text-xs text-gray-400">or try a demo</span>
         <div className="flex-1 h-px bg-gray-200" />
       </div>
 
+      {/* Demo */}
       <button
         onClick={handleDemo}
         disabled={loading}
-        className="w-full py-2.5 rounded-xl border-2 border-dashed border-indigo-200 text-indigo-600 text-sm font-medium hover:border-indigo-300 hover:bg-indigo-50 transition-all disabled:opacity-40"
+        className="w-full py-2 rounded-lg border border-gray-300 text-gray-600 text-sm hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-40"
       >
-        🗽 Try Demo: 350 Fifth Ave, New York, NY
+        350 Fifth Ave, New York, NY — Empire State Building
       </button>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          {error}
+        </p>
       )}
 
       <p className="text-xs text-gray-400 text-center">
-        Your address is only used to look up representatives — it is never stored.
+        Your address is only used to find your representatives — it is never stored.
       </p>
     </div>
   );
