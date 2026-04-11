@@ -11,12 +11,13 @@ export default function Home() {
     <main className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(150deg, #0d1f36 0%, #1a3356 45%, #7f1d1d 100%)' }}>
 
       {/* Nav */}
-      <nav className="shrink-0 border-b border-white/10 px-6 py-3.5 flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-extrabold text-white tracking-tight">Rep</span>
-          <span className="text-xl font-extrabold tracking-tight" style={{ color: '#e03040' }}>Watch</span>
-        </div>
-        <span className="hidden sm:block text-white/40 text-xs font-medium tracking-wide uppercase ml-1">Civic Transparency</span>
+      <nav className="shrink-0 border-b border-white/10 px-6 py-3 flex items-center justify-between">
+        <span className="text-lg font-black tracking-tight text-white">
+          Rep<span style={{ color: '#e03040' }}>Watch</span>
+        </span>
+        <span className="text-xs text-white/35 font-medium tracking-widest uppercase hidden sm:block">
+          Civic Transparency Tool
+        </span>
       </nav>
 
       {/* Body */}

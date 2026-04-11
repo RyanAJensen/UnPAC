@@ -30,8 +30,8 @@ export default function ResultsPage() {
 
   if (!result) return (
     <div className="h-screen flex flex-col bg-page">
-      <nav className="shrink-0 border-b border-navy-700 px-4 sm:px-6 py-3" style={{ backgroundColor: '#0d1f36' }}>
-        <span className="text-lg font-extrabold text-white tracking-tight">RepWatch</span>
+      <nav className="shrink-0 border-b border-white/10 px-6 py-3 flex items-center justify-between" style={{ backgroundColor: '#0d1f36' }}>
+        <span className="text-lg font-black tracking-tight text-white">Rep<span style={{ color: '#e03040' }}>Watch</span></span>
       </nav>
       <div className="flex-1 p-6"><LoadingSkeleton count={6} /></div>
     </div>
@@ -47,16 +47,21 @@ export default function ResultsPage() {
     <div className="h-screen flex flex-col bg-page overflow-hidden">
 
       {/* Nav */}
-      <nav className="shrink-0 border-b border-white/10 px-4 sm:px-6 py-2.5 flex items-center gap-4 z-10" style={{ backgroundColor: '#0d1f36' }}>
-        <button onClick={() => router.push('/')} className="font-extrabold text-white tracking-tight hover:text-white/80 transition-colors">
+      <nav className="shrink-0 border-b border-white/10 px-6 py-3 flex items-center gap-3" style={{ backgroundColor: '#0d1f36' }}>
+        <button onClick={() => router.push('/')} className="text-lg font-black tracking-tight text-white hover:opacity-80 transition-opacity shrink-0">
           Rep<span style={{ color: '#e03040' }}>Watch</span>
         </button>
-        <span className="text-white/20 hidden sm:block">|</span>
-        <button onClick={() => router.push('/')} className="hidden sm:block text-xs text-white/50 hover:text-white/80 transition-colors">
-          ← New address
-        </button>
-        <p className="text-xs text-white/40 truncate hidden md:block flex-1">{result.address}</p>
-        <span className="text-xs text-white/40 ml-auto shrink-0">{result.reps.length} reps</span>
+        <div className="flex-1 flex items-center gap-2 min-w-0 hidden sm:flex">
+          <span className="text-white/20">/</span>
+          <button onClick={() => router.push('/')} className="text-xs text-white/40 hover:text-white/70 transition-colors shrink-0">
+            Search
+          </button>
+          <span className="text-white/20">/</span>
+          <span className="text-xs text-white/60 truncate">{result.address}</span>
+        </div>
+        <span className="ml-auto shrink-0 text-xs font-medium text-white/30 hidden sm:block">
+          {result.reps.length} representative{result.reps.length !== 1 ? 's' : ''}
+        </span>
       </nav>
 
       {/* Two-pane content */}
