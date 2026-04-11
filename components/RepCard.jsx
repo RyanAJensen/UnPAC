@@ -1,6 +1,24 @@
+import { useState } from 'react';
 import PartyBadge from './PartyBadge';
 
+function getInitials(name) {
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function InitialsCircle({ name }) {
+  return (
+    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shrink-0 text-white font-bold text-sm select-none">
+      {getInitials(name)}
+    </div>
+  );
+}
+
 export default function RepCard({ rep, onClick, isExpanded }) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <button
       onClick={onClick}
@@ -11,17 +29,15 @@ export default function RepCard({ rep, onClick, isExpanded }) {
       }`}
     >
       <div className="flex items-start gap-3">
-        {rep.photoUrl ? (
+        {rep.photoUrl && !imgError ? (
           <img
             src={rep.photoUrl}
             alt={rep.name}
             className="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0"
-            onError={e => { e.target.style.display = 'none'; }}
+            onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center shrink-0 text-indigo-600 font-bold">
-            {rep.name[0]}
-          </div>
+          <InitialsCircle name={rep.name} />
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">

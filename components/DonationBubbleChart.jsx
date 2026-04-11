@@ -50,6 +50,8 @@ export default function DonationBubbleChart({ sectors, totalRaised }) {
           data={data}
           dataKey="size"
           content={<CustomContent />}
+          isAnimationActive={false}
+          animationDuration={0}
         >
           <Tooltip
             formatter={(value, name, props) => [
