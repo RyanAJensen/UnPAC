@@ -20,6 +20,34 @@ const VOTE_STYLES = {
   Present:      'text-gray-500',
 };
 
+function VoteRow({ v }) {
+  const catCls = CATEGORY_COLORS[v.category] ?? CATEGORY_COLORS.Other;
+  const voteCls = VOTE_STYLES[v.vote] ?? 'text-gray-500';
+
+  return (
+    <div className={`py-3 flex items-start gap-3 ${v.isLandmark ? 'bg-gold-50 -mx-1 px-1 rounded-lg' : ''}`}>
+      <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded border font-medium mt-0.5 ${catCls}`}>
+        {v.category}
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {v.isLandmark && (
+            <span
+              className="shrink-0 text-xs font-bold bg-gold-100 text-gold-700 border border-gold-400 px-1.5 py-0.5 rounded-full"
+              title="Key tracked vote"
+            >
+              ★ Key Vote
+            </span>
+          )}
+          <p className="text-sm text-gray-800 leading-snug">{v.billTitle}</p>
+        </div>
+        {v.date && <p className="text-xs text-gray-400 mt-0.5">{v.date}</p>}
+      </div>
+      <span className={`shrink-0 text-xs ${voteCls}`}>{v.vote}</span>
+    </div>
+  );
+}
+
 export default function VotingTable({ votes, dataSource }) {
   if (!votes || votes.length === 0) {
     return (
@@ -30,6 +58,12 @@ export default function VotingTable({ votes, dataSource }) {
     );
   }
 
+  // Pin landmark votes to the top, then sort the rest by date
+  const landmark = votes.filter(v => v.isLandmark);
+  const regular  = votes.filter(v => !v.isLandmark);
+  const sorted   = [...landmark, ...regular];
+
+  // Category summary pills (exclude landmark from count so it doesn't skew)
   const categories = [...new Set(votes.map(v => v.category))];
 
   return (
@@ -46,28 +80,33 @@ export default function VotingTable({ votes, dataSource }) {
         ))}
       </div>
 
+      {/* Key Votes section header (if any) */}
+      {landmark.length > 0 && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs font-bold text-gold-600 uppercase tracking-wider">Key Tracked Votes</span>
+          <div className="flex-1 h-px bg-gold-100" />
+        </div>
+      )}
+
       {/* Bill rows */}
       <div className="divide-y divide-gray-100">
-        {votes.map((v, i) => (
-          <div key={i} className="py-3 flex items-start gap-3">
-            <span
-              className={`shrink-0 text-xs px-1.5 py-0.5 rounded border font-medium mt-0.5 ${CATEGORY_COLORS[v.category] ?? CATEGORY_COLORS.Other}`}
-            >
-              {v.category}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-800 leading-snug">{v.billTitle}</p>
-              {v.date && (
-                <p className="text-xs text-gray-400 mt-0.5">{v.date}</p>
+        {sorted.map((v, i) => {
+          const isFirstRegular = landmark.length > 0 && i === landmark.length;
+          return (
+            <div key={i}>
+              {isFirstRegular && (
+                <div className="flex items-center gap-2 py-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">All Activity</span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
               )}
+              <VoteRow v={v} />
             </div>
-            <span className={`shrink-0 text-xs ${VOTE_STYLES[v.vote] ?? 'text-gray-500'}`}>
-              {v.vote}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
+      {/* Legend + source */}
       <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-1">
         <span className="text-xs text-gray-400">Weight:</span>
         <span className="text-xs text-navy-700 font-bold">Sponsored</span>
