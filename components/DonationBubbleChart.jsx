@@ -5,6 +5,7 @@ import DataGapBanner from './DataGapBanner';
 const SECTOR_COLORS = {
   Finance:          '#1e4276',
   Health:           '#be185d',
+  Healthcare:       '#be185d',
   Energy:           '#b45309',
   Defense:          '#374151',
   Technology:       '#0369a1',
@@ -13,14 +14,30 @@ const SECTOR_COLORS = {
   Agriculture:      '#3f6212',
   Media:            '#9a3412',
   'PAC/Dark Money': '#991b1b',
+  Education:        '#0f766e',
+  Labor:            '#7c3aed',
+  Transportation:   '#0284c7',
+  Retail:           '#b91c1c',
   Other:            '#6b7280',
 };
+
+// Deterministic color for any sector name not explicitly mapped above.
+// Uses a string hash → HSL hue so every unknown sector gets its own distinct color.
+function sectorColor(name) {
+  if (SECTOR_COLORS[name]) return SECTOR_COLORS[name];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 55%, 38%)`;
+}
 
 function CustomContent({ x, y, width, height, name, pct }) {
   if (width < 40 || height < 30) return null;
   return (
     <g>
-      <rect x={x} y={y} width={width} height={height} fill={SECTOR_COLORS[name] ?? '#9ca3af'} rx={6} />
+      <rect x={x} y={y} width={width} height={height} fill={sectorColor(name)} rx={6} />
       <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill="white" style={{ fontSize: Math.min(13, width / 8), fontWeight: 600 }}>
         {name}
       </text>
