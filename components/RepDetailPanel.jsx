@@ -4,7 +4,6 @@ import PartyBadge from './PartyBadge';
 import VotingTable from './VotingTable';
 import DonationBubbleChart from './DonationBubbleChart';
 import ContributorsList from './ContributorsList';
-import InfluenceScore from './InfluenceScore';
 import DataGapBanner from './DataGapBanner';
 import { computeVotingInfluenceScore } from '@/lib/influenceScore';
 
@@ -12,6 +11,24 @@ function getInitials(name) {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function ScoreBar({ label, score }) {
+  if (score == null) return null;
+  const color = score > 66 ? '#dc2626' : score > 33 ? '#d97706' : '#16a34a';
+  const tier = score > 66 ? 'High' : score > 33 ? 'Moderate' : 'Low';
+  return (
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-bold" style={{ color }}>{score} <span className="font-normal text-gray-400">/ 100</span></span>
+      </div>
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: color }} />
+      </div>
+      <div className="text-[10px] mt-0.5" style={{ color }}>{tier}</div>
+    </div>
+  );
 }
 
 export default function RepDetailPanel({ rep }) {
@@ -30,23 +47,18 @@ export default function RepDetailPanel({ rep }) {
     try {
       if (rep.level === 'federal' && rep.bioguideId) {
         const params = new URLSearchParams({
-          name: rep.name,
-          state: rep.stateCode ?? '',
-          office: rep.office,
+          name: rep.name, state: rep.stateCode ?? '', office: rep.office,
           ...(rep.fecId ? { fecId: rep.fecId } : {}),
         });
         const res = await fetch(`/api/rep-detail/${rep.bioguideId}?${params}`);
-        const data = await res.json();
-        setDetail({ ...rep, ...data });
+        setDetail({ ...rep, ...await res.json() });
       } else if (rep.level === 'state') {
         const params = new URLSearchParams({
-          name: rep.name,
-          state: rep.stateCode ?? '',
+          name: rep.name, state: rep.stateCode ?? '',
           ...(rep.openStatesId ? { openStatesId: rep.openStatesId } : {}),
         });
         const res = await fetch(`/api/state-rep?${params}`);
-        const data = await res.json();
-        setDetail({ ...rep, ...data });
+        setDetail({ ...rep, ...await res.json() });
       } else {
         setDetail({ ...rep, votes: null, finance: null });
       }
@@ -57,122 +69,104 @@ export default function RepDetailPanel({ rep }) {
     }
   }
 
+  const votingScore = detail ? computeVotingInfluenceScore(detail.votes ?? [], detail.finance?.sectors ?? []) : null;
+  const levelColor = rep.level === 'federal' ? '#4f46e5' : rep.level === 'state' ? '#0d9488' : '#6b7280';
+
   const tabs = [
     { id: 'legislation', label: 'Legislation' },
     { id: 'finance', label: 'Finance' },
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="p-5 border-b border-gray-100">
-        <div className="flex items-start gap-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+      {/* Compact header */}
+      <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          {/* Photo */}
           {(rep.photoUrl || detail?.memberDetail?.photoUrl) && !photoError ? (
             <img
               src={detail?.memberDetail?.photoUrl ?? rep.photoUrl}
               alt={rep.name}
-              className="w-16 h-16 rounded-full object-cover border border-gray-200 shrink-0"
+              className="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0"
               onError={() => setPhotoError(true)}
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center shrink-0 text-indigo-600 text-xl font-bold">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold"
+              style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
               {getInitials(rep.name)}
             </div>
           )}
+
+          {/* Name / office / badge */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900">{rep.name}</h2>
+              <h2 className="text-base font-bold text-gray-900 leading-tight">{rep.name}</h2>
               <PartyBadge party={rep.party} />
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={{ backgroundColor: `${levelColor}18`, color: levelColor }}>
+                {rep.level === 'federal' ? 'Federal' : rep.level === 'state' ? 'State' : 'Local'}
+              </span>
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">{rep.office}</p>
+            <p className="text-xs text-gray-500 mt-0.5 truncate">{rep.office}</p>
             {rep.website && (
-              <a href={rep.website} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline mt-1 inline-block">
+              <a href={rep.website} target="_blank" rel="noopener noreferrer"
+                className="text-[10px] text-indigo-600 hover:underline">
                 Official website →
               </a>
             )}
           </div>
-          {(detail?.influenceScore != null || detail?.votes?.length) && (
-            <div className="shrink-0 hidden sm:flex flex-col gap-2">
-              {detail?.influenceScore != null && (
-                <InfluenceScore
-                  score={detail.influenceScore}
-                  title="Legislative Influence"
-                  description="Donor concentration in industries they regulate"
-                />
-              )}
-              {(() => {
-                const vs = computeVotingInfluenceScore(detail?.votes ?? [], detail?.finance?.sectors ?? []);
-                return vs != null ? (
-                  <InfluenceScore
-                    score={vs}
-                    title="Voting Influence"
-                    description="How often legislation serves top donor industries"
-                  />
-                ) : null;
-              })()}
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* Level badge */}
-      <div className="px-5 pt-3">
-        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-          rep.level === 'federal' ? 'bg-indigo-100 text-indigo-700' :
-          rep.level === 'state' ? 'bg-teal-100 text-teal-700' :
-          'bg-gray-100 text-gray-600'
-        }`}>
-          {rep.level === 'federal' ? '🏛 Federal' : rep.level === 'state' ? '🏛 State' : '🏙 Local'}
-        </span>
-      </div>
-
-      {loading ? (
-        <div className="p-5">
-          <div className="space-y-3 animate-pulse">
-            <div className="h-4 bg-gray-100 rounded w-3/4" />
-            <div className="h-4 bg-gray-100 rounded w-1/2" />
-            <div className="h-4 bg-gray-100 rounded w-5/6" />
+        {/* Score bars — shown once data loads */}
+        {!loading && (detail?.influenceScore != null || votingScore != null) && (
+          <div className="flex gap-4 mt-3 pt-3 border-t border-gray-50">
+            {detail?.influenceScore != null && (
+              <ScoreBar label="Legislative Influence" score={detail.influenceScore} />
+            )}
+            {votingScore != null && (
+              <ScoreBar label="Voting Influence" score={votingScore} />
+            )}
           </div>
+        )}
+      </div>
+
+      {/* Body */}
+      {loading ? (
+        <div className="p-4 space-y-2 animate-pulse">
+          <div className="h-3 bg-gray-100 rounded w-3/4" />
+          <div className="h-3 bg-gray-100 rounded w-1/2" />
+          <div className="h-3 bg-gray-100 rounded w-5/6" />
         </div>
       ) : rep.level === 'local' ? (
-        <div className="p-5">
+        <div className="p-4">
           <DataGapBanner source="Voting records and campaign finance" reason="not available for local representatives" />
         </div>
       ) : (
         <>
-          {/* Tabs */}
-          <div className="flex border-b border-gray-100 px-5 mt-3">
+          <div className="flex border-b border-gray-100 px-4">
             {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`mr-4 pb-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-700'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className={`mr-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab.id ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}>
                 {tab.label}
               </button>
             ))}
           </div>
 
-          <div className="p-5">
+          <div className="p-4">
             {activeTab === 'legislation' && (
               <VotingTable votes={detail?.votes} dataSource={detail?.votesDataSource} />
             )}
-
             {activeTab === 'finance' && (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Donations by Industry (2024)</h3>
-                  <DonationBubbleChart
-                    sectors={detail?.finance?.sectors}
-                    totalRaised={detail?.finance?.totalRaised}
-                  />
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Donations by Industry (2024)</h3>
+                  <DonationBubbleChart sectors={detail?.finance?.sectors} totalRaised={detail?.finance?.totalRaised} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Top Contributors</h3>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Top Contributors</h3>
                   <ContributorsList contributors={detail?.finance?.topContributors} />
                 </div>
                 {rep.level !== 'federal' && (
@@ -180,7 +174,6 @@ export default function RepDetailPanel({ rep }) {
                 )}
               </div>
             )}
-
           </div>
         </>
       )}

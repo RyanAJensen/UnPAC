@@ -22,96 +22,59 @@ export default function ResultsPage() {
     if (firstFederal) setExpandedId(repKey(firstFederal));
   }, [router]);
 
-  function repKey(rep) {
-    return rep.bioguideId ?? rep.name;
-  }
-
+  function repKey(rep) { return rep.bioguideId ?? rep.name; }
   function toggleExpand(rep) {
     const key = repKey(rep);
     setExpandedId(prev => prev === key ? null : key);
   }
 
   if (!result) return (
-    <main className="min-h-screen bg-page">
-      <nav className="border-b border-navy-700" style={{ backgroundColor: '#0d1f36' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
-          <span className="text-lg font-extrabold text-white tracking-tight">RepWatch</span>
-        </div>
+    <div className="h-screen flex flex-col bg-page">
+      <nav className="shrink-0 border-b border-navy-700 px-4 sm:px-6 py-3" style={{ backgroundColor: '#0d1f36' }}>
+        <span className="text-lg font-extrabold text-white tracking-tight">RepWatch</span>
       </nav>
-      <div className="max-w-6xl mx-auto px-4 py-10">
-        <LoadingSkeleton count={6} />
-      </div>
-    </main>
+      <div className="flex-1 p-6"><LoadingSkeleton count={6} /></div>
+    </div>
   );
 
   const repsByLevel = LEVEL_ORDER.reduce((acc, level) => {
     acc[level] = result.reps.filter(r => r.level === level);
     return acc;
   }, {});
-
   const expandedRep = result.reps.find(r => repKey(r) === expandedId);
 
   return (
-    <main className="min-h-screen bg-page">
+    <div className="h-screen flex flex-col bg-page overflow-hidden">
 
-      {/* Sticky nav */}
-      <nav className="border-b border-navy-700 sticky top-0 z-10" style={{ backgroundColor: '#0d1f36' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-5">
-          <button
-            onClick={() => router.push('/')}
-            className="text-base font-extrabold text-white tracking-tight shrink-0 hover:text-navy-100 transition-colors"
-          >
-            RepWatch
-          </button>
-
-          <span className="text-navy-700 hidden sm:block select-none">|</span>
-
-          <button
-            onClick={() => router.push('/')}
-            className="hidden sm:flex items-center gap-1 text-sm text-navy-200 hover:text-white transition-colors shrink-0"
-          >
-            ← New address
-          </button>
-
-          <div className="flex-1 min-w-0 hidden md:block">
-            <p className="text-xs text-navy-200 truncate">{result.address}</p>
-          </div>
-
-          <span className="text-xs text-navy-200 shrink-0 ml-auto">
-            {result.reps.length} representatives
-          </span>
-        </div>
-      </nav>
-
-      {/* Mobile sub-bar */}
-      <div className="sm:hidden bg-navy-800 px-4 py-2 border-b border-navy-700">
-        <button
-          onClick={() => router.push('/')}
-          className="text-xs text-navy-100 hover:text-white flex items-center gap-1 mb-0.5"
-        >
+      {/* Nav */}
+      <nav className="shrink-0 border-b border-white/10 px-4 sm:px-6 py-2.5 flex items-center gap-4 z-10" style={{ backgroundColor: '#0d1f36' }}>
+        <button onClick={() => router.push('/')} className="font-extrabold text-white tracking-tight hover:text-white/80 transition-colors">
+          Rep<span style={{ color: '#e03040' }}>Watch</span>
+        </button>
+        <span className="text-white/20 hidden sm:block">|</span>
+        <button onClick={() => router.push('/')} className="hidden sm:block text-xs text-white/50 hover:text-white/80 transition-colors">
           ← New address
         </button>
-        <p className="text-xs text-navy-200 truncate">{result.address}</p>
-      </div>
+        <p className="text-xs text-white/40 truncate hidden md:block flex-1">{result.address}</p>
+        <span className="text-xs text-white/40 ml-auto shrink-0">{result.reps.length} reps</span>
+      </nav>
 
-      {/* Main content */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[290px_1fr] gap-6 items-start">
+      {/* Two-pane content */}
+      <div className="flex-1 flex overflow-hidden">
 
-          {/* Rep list */}
-          <div className="space-y-6">
+        {/* Sidebar — scrolls independently */}
+        <div className="w-56 shrink-0 border-r border-gray-200 bg-white overflow-y-auto">
+          <div className="p-3 space-y-4">
             {LEVEL_ORDER.map(level => {
               const reps = repsByLevel[level];
               if (!reps?.length) return null;
               return (
                 <div key={level}>
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest shrink-0">
-                      {LEVEL_LABELS[level]}
-                    </h2>
-                    <div className="flex-1 h-px bg-gray-200" />
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{LEVEL_LABELS[level]}</span>
+                    <div className="flex-1 h-px bg-gray-100" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {reps.map(rep => (
                       <RepCard
                         key={repKey(rep)}
@@ -125,22 +88,21 @@ export default function ResultsPage() {
               );
             })}
           </div>
-
-          {/* Detail panel */}
-          <div>
-            {expandedRep ? (
-              <RepDetailPanel key={repKey(expandedRep)} rep={expandedRep} />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 bg-white rounded-xl border-2 border-dashed border-gray-200 text-gray-400">
-                <div className="text-3xl mb-2">👆</div>
-                <p className="text-sm">Select a representative to view their details</p>
-              </div>
-            )}
-          </div>
-
         </div>
-      </div>
 
-    </main>
+        {/* Detail pane — scrolls independently */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {expandedRep ? (
+            <RepDetailPanel key={repKey(expandedRep)} rep={expandedRep} />
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+              <div className="text-4xl mb-3">👈</div>
+              <p className="text-sm">Select a representative</p>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
   );
 }
