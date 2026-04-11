@@ -6,6 +6,7 @@ import DonationBubbleChart from './DonationBubbleChart';
 import ContributorsList from './ContributorsList';
 import InfluenceScore from './InfluenceScore';
 import DataGapBanner from './DataGapBanner';
+import { computeVotingInfluenceScore } from '@/lib/influenceScore';
 
 function getInitials(name) {
   const parts = name.trim().split(/\s+/);
@@ -90,9 +91,25 @@ export default function RepDetailPanel({ rep }) {
               </a>
             )}
           </div>
-          {detail?.influenceScore != null && (
-            <div className="shrink-0 hidden sm:block">
-              <InfluenceScore score={detail.influenceScore} />
+          {(detail?.influenceScore != null || detail?.votes?.length) && (
+            <div className="shrink-0 hidden sm:flex flex-col gap-2">
+              {detail?.influenceScore != null && (
+                <InfluenceScore
+                  score={detail.influenceScore}
+                  title="Legislative Influence"
+                  description="Donor concentration in industries they regulate"
+                />
+              )}
+              {(() => {
+                const vs = computeVotingInfluenceScore(detail?.votes ?? [], detail?.finance?.sectors ?? []);
+                return vs != null ? (
+                  <InfluenceScore
+                    score={vs}
+                    title="Voting Influence"
+                    description="How often legislation serves top donor industries"
+                  />
+                ) : null;
+              })()}
             </div>
           )}
         </div>

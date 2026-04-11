@@ -1,25 +1,23 @@
 'use client';
 
-export default function InfluenceScore({ score }) {
+function scoreStyle(score) {
+  if (score > 66) return { stroke: '#dc2626', bg: 'bg-red-50',   border: 'border-red-100',   label: 'High',     labelCls: 'text-red-700' };
+  if (score > 33) return { stroke: '#d97706', bg: 'bg-amber-50', border: 'border-amber-100', label: 'Moderate', labelCls: 'text-amber-700' };
+  return           { stroke: '#16a34a', bg: 'bg-green-50', border: 'border-green-100', label: 'Low',      labelCls: 'text-green-700' };
+}
+
+export default function InfluenceScore({ score, title, description }) {
   if (score == null) return null;
-
-  const radius = 40;
-  const circumference = 2 * Math.PI * radius;
+  const { stroke, bg, border, label, labelCls } = scoreStyle(score);
+  const circumference = 2 * Math.PI * 40;
   const offset = circumference - (score / 100) * circumference;
-
-  const { stroke, bg, border, label, labelCls } =
-    score > 66
-      ? { stroke: '#dc2626', bg: 'bg-red-50',   border: 'border-red-100',   label: 'High Industry Influence', labelCls: 'text-red-700' }
-      : score > 33
-      ? { stroke: '#d97706', bg: 'bg-amber-50', border: 'border-amber-100', label: 'Moderate Influence',       labelCls: 'text-amber-700' }
-      : { stroke: '#16a34a', bg: 'bg-green-50', border: 'border-green-100', label: 'Low Influence',            labelCls: 'text-green-700' };
 
   return (
     <div className={`flex items-center gap-3 p-3 rounded-xl border ${bg} ${border}`}>
-      <svg width="76" height="76" viewBox="0 0 100 100" className="shrink-0">
-        <circle cx="50" cy="50" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="11" />
+      <svg width="72" height="72" viewBox="0 0 100 100" className="shrink-0">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="11" />
         <circle
-          cx="50" cy="50" r={radius}
+          cx="50" cy="50" r="40"
           fill="none" stroke={stroke} strokeWidth="11"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -35,11 +33,11 @@ export default function InfluenceScore({ score }) {
       </svg>
       <div>
         <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-0.5">
-          Influence Score
+          {title}
         </div>
-        <div className={`text-sm font-semibold ${labelCls}`}>{label}</div>
-        <div className="text-xs text-gray-500 mt-0.5 leading-relaxed max-w-[140px]">
-          Measures how concentrated funding is in industries they legislate over
+        <div className={`text-sm font-semibold ${labelCls}`}>{label} Influence</div>
+        <div className="text-xs text-gray-500 mt-0.5 leading-relaxed max-w-[150px]">
+          {description}
         </div>
       </div>
     </div>

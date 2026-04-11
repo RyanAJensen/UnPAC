@@ -3,7 +3,7 @@ import AddressInput from '@/components/AddressInput';
 const FEATURES = [
   { icon: '🗳', label: 'Voting Record', desc: 'Bills sponsored across 8 issue categories' },
   { icon: '💰', label: 'Who Funds Them', desc: 'Campaign donations by industry' },
-  { icon: '📊', label: 'Influence Score', desc: 'How much donors shape their votes' },
+  { icon: '📊', label: 'Influence Scores', desc: 'Legislative & voting alignment with donors' },
 ];
 
 export default function Home() {
