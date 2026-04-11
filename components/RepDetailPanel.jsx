@@ -8,13 +8,21 @@ import InfluenceScore from './InfluenceScore';
 import ConflictReport from './ConflictReport';
 import DataGapBanner from './DataGapBanner';
 
+function getInitials(name) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export default function RepDetailPanel({ rep }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [conflictLoading, setConflictLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('legislation');
+  const [photoError, setPhotoError] = useState(false);
 
   useEffect(() => {
+    setPhotoError(false);
     loadDetail();
   }, [rep.bioguideId, rep.name]);
 
@@ -32,7 +40,11 @@ export default function RepDetailPanel({ rep }) {
         const data = await res.json();
         setDetail({ ...rep, ...data });
       } else if (rep.level === 'state') {
-        const params = new URLSearchParams({ name: rep.name, state: rep.stateCode ?? '' });
+        const params = new URLSearchParams({
+          name: rep.name,
+          state: rep.stateCode ?? '',
+          ...(rep.openStatesId ? { openStatesId: rep.openStatesId } : {}),
+        });
         const res = await fetch(`/api/state-rep?${params}`);
         const data = await res.json();
         setDetail({ ...rep, ...data });
@@ -47,18 +59,18 @@ export default function RepDetailPanel({ rep }) {
   }
 
   async function runConflictAnalysis() {
-    if (!detail?.votes || !detail?.finance) return;
+    if (!detail?.votes?.length) return;
     setConflictLoading(true);
     try {
       const res = await fetch('/api/conflict-detect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repName: rep.name, votes: detail.votes, finance: detail.finance }),
+        body: JSON.stringify({ repName: rep.name, votes: detail.votes, finance: detail.finance ?? null }),
       });
       const report = await res.json();
       setDetail(d => ({ ...d, conflict: report }));
     } catch (err) {
-      console.error('Conflict analysis failed:', err);
+      setDetail(d => ({ ...d, conflict: { error: err.message } }));
     } finally {
       setConflictLoading(false);
     }
@@ -75,16 +87,16 @@ export default function RepDetailPanel({ rep }) {
       {/* Header */}
       <div className="p-5 border-b border-gray-100">
         <div className="flex items-start gap-4">
-          {(rep.photoUrl || detail?.memberDetail?.photoUrl) ? (
+          {(rep.photoUrl || detail?.memberDetail?.photoUrl) && !photoError ? (
             <img
               src={detail?.memberDetail?.photoUrl ?? rep.photoUrl}
               alt={rep.name}
               className="w-16 h-16 rounded-full object-cover border border-gray-200 shrink-0"
-              onError={e => { e.target.style.display = 'none'; }}
+              onError={() => setPhotoError(true)}
             />
           ) : (
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center shrink-0 text-indigo-600 text-xl font-bold">
-              {rep.name[0]}
+              {getInitials(rep.name)}
             </div>
           )}
           <div className="flex-1 min-w-0">
@@ -182,10 +194,13 @@ export default function RepDetailPanel({ rep }) {
                   report={detail?.conflict}
                   loading={conflictLoading}
                   onAnalyze={runConflictAnalysis}
-                  hasData={!!(detail?.votes?.length && detail?.finance?.sectors?.length)}
+                  hasData={!!(detail?.votes?.length)}
                 />
-                {!(detail?.votes?.length && detail?.finance?.sectors?.length) && (
-                  <DataGapBanner source="Conflict analysis" reason="requires both voting data and finance data" />
+                {detail?.conflict?.error && (
+                  <p className="text-xs text-red-500">Analysis error: {detail.conflict.error}</p>
+                )}
+                {!detail?.votes?.length && (
+                  <DataGapBanner source="Conflict analysis" reason="requires voting/sponsorship data" />
                 )}
               </div>
             )}

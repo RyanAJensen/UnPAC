@@ -6,24 +6,30 @@ export async function POST(request) {
   try {
     const { repName, votes, finance } = await request.json();
 
-    if (!votes?.length || !finance?.sectors?.length) {
-      return Response.json({ error: 'votes and finance.sectors are required' }, { status: 400 });
+    if (!votes?.length) {
+      return Response.json({ error: 'votes are required' }, { status: 400 });
     }
 
-    const sectorsText = finance.sectors.slice(0, 8)
-      .map(s => `- ${s.sector}: $${s.amount.toLocaleString()} (${s.pct}%)`)
-      .join('\n');
+    const hasSectors = finance?.sectors?.length > 0;
+
+    const sectorsText = hasSectors
+      ? finance.sectors.slice(0, 8).map(s => `- ${s.sector}: $${s.amount.toLocaleString()} (${s.pct}%)`).join('\n')
+      : '(No campaign finance data available for this representative)';
 
     const votesText = votes.slice(0, 20)
       .map(v => `- [${v.category}] ${v.date ?? 'n/d'}: "${v.billTitle}" — ${v.vote}`)
       .join('\n');
+
+    const donorInstruction = hasSectors
+      ? 'Identify factual misalignments between a legislator\'s voting/sponsorship record and their campaign donor industries. Only flag conflicts you can tie to specific legislation AND specific donor sectors.'
+      : 'Analyze this legislator\'s voting/sponsorship record for notable patterns, ideological consistency, or policy priorities. Note that no donor data is available.';
 
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 768,
       messages: [{
         role: 'user',
-        content: `You are a nonpartisan political analyst. Identify factual misalignments between a legislator's voting/sponsorship record and their campaign donor industries. Only flag conflicts you can tie to specific legislation AND specific donor sectors. Do not express political opinions.
+        content: `You are a nonpartisan political analyst. ${donorInstruction} Do not express political opinions.
 
 LEGISLATOR: ${repName}
 
@@ -39,9 +45,9 @@ Return ONLY this JSON object (no markdown, no explanation):
   "summary": "<2-3 plain English sentences for a general audience>",
   "conflicts": [
     {
-      "donorIndustry": "<sector name>",
+      "donorIndustry": "<sector name or policy area>",
       "relevantVotes": ["<bill title>"],
-      "tension": "Supports donors" or "Votes against donors" or "Mixed",
+      "tension": "Supports donors" or "Votes against donors" or "Mixed" or "Notable pattern",
       "explanation": "<one specific sentence>"
     }
   ]
