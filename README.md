@@ -1,5 +1,4 @@
-# UnPAC
-## *Claude Vibeathon Spring 26 Beginner Track Winner*
+# UnPAC - *Claude Vibeathon Spring 26 Beginner Track Winner*
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
