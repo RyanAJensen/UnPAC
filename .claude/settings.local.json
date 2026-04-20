@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"https://api.congress.gov/v3/member/P000197/sponsored-legislation?format=json&limit=5\")",
+      "Bash(curl -s \"https://api.congress.gov/v3/member/P000197/sponsored-legislation?format=json&limit=5&api_key=b864a243-33ad-49c5-92ff-77a9ad18bafc\")",
+      "Bash(curl -s \"https://api.open.fec.gov/v1/candidates/?name=Nancy+Pelosi&state=CA&office=H&sort=-receipts&per_page=3&api_key=DEMO_KEY\")",
+      "Bash(node -e \"const p = require\\(''./package.json''\\); console.log\\(p.dependencies[''@anthropic-ai/sdk''] || p.devDependencies?.[''@anthropic-ai/sdk''] || ''not found''\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"const d=require\\(''''/dev/stdin''''\\); console.log\\(d.version\\)\")",
+      "Bash(node -p \"require\\(''./node_modules/@anthropic-ai/sdk/package.json''\\).version\")",
+      "Bash(echo:*)",
+      "Bash(curl -s \"https://v3.openstates.org/people.geo?lat=40.7484&lng=-73.9967&include=other_identifiers\" -H \"X-API-KEY: ff9205d7-84d7-4c3a-a7ab-9d2777283229\")",
+      "Bash(curl -s \"https://geocoding.geo.census.gov/geocoder/geographies/address?street=350+Fifth+Ave&city=New+York&state=NY&zip=10118&benchmark=Public_AR_Census2020&vintage=Census2020_Census2020&layers=all&format=json\")",
+      "Bash(curl -s \"https://api.congress.gov/v3/member/P000197?format=json&api_key=b864a243-33ad-49c5-92ff-77a9ad18bafc\")",
+      "Bash(curl -s \"https://v3.openstates.org/people.geo?lat=40.7128&lng=-74.0060\" -H \"X-API-KEY: ff9205d7-84d7-4c3a-a7ab-9d2777283229\")",
+      "Bash(curl -s \"https://api.open.fec.gov/v1/candidates/?name=chuck+schumer&state=NY&office=S&sort=-receipts&per_page=3&api_key=fGj2l4TVbgTLJ4mlo0kPoiCHNRmNMx4lemjBKCo5\")",
+      "Bash(curl -s \"https://api.open.fec.gov/v1/candidates/?name=chuck+schumer&state=NY&office=S&per_page=3&api_key=fGj2l4TVbgTLJ4mlo0kPoiCHNRmNMx4lemjBKCo5\")",
+      "Bash(curl -s \"https://api.open.fec.gov/v1/candidates/?name=schumer&state=NY&per_page=3&api_key=fGj2l4TVbgTLJ4mlo0kPoiCHNRmNMx4lemjBKCo5\")",
+      "Bash(curl -s \"https://api.congress.gov/v3/member/S000033?format=json\")",
+      "Bash(curl -s \"https://api.congress.gov/v3/member/S000033/sponsored-legislation?format=json&limit=5&api_key=DEMO_KEY\")",
+      "Bash(curl -s \"https://api.congress.gov/v3/bill/117/hr/4346/actions?limit=10&format=json&api_key=DEMO_KEY\")",
+      "Bash(curl -s \"https://api.open.fec.gov/v1/candidates/?name=nancy+pelosi&state=CA&office=H&per_page=5&api_key=fGj2l4TVbgTLJ4mlo0kPoiCHNRmNMx4lemjBKCo5\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(r[''''candidate_id''''], r[''''name''''], r.get\\(''''has_raised_funds''''\\)\\) for r in d[''''results''''][:5]]\")",
+      "Bash(curl -s \"https://api.congress.gov/v3/member/S000033?format=json&api_key=DEMO_KEY\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); m=d[''''member'''']; print\\(m.get\\(''''directOrderName''''\\), m.get\\(''''partyHistory'''',[{}]\\)[0].get\\(''''partyAbbreviation''''\\), m.get\\(''''terms'''',{}\\).get\\(''''item'''',[{}]\\)[0].get\\(''''chamber''''\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); m=d[''''member'''']; print\\(m.get\\(''''directOrderName''''\\), m.get\\(''''partyHistory'''',[{}]\\)[0].get\\(''''partyAbbreviation''''\\)\\)\")",
+      "Bash(curl -s \"https://api.congress.gov/v3/member/S000033/sponsored-legislation?format=json&limit=3&api_key=DEMO_KEY\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(b[''''title''''][:80]\\) for b in d[''''sponsoredLegislation''''][:3]]\")",
+      "Bash(curl -s \"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1172/vote_117_2_00271.xml\")",
+      "Bash(curl -s \"https://api.congress.gov/v3/member/S000033?format=json&api_key=91CB3uSPpOn66ZXA7asztaGhGl1yiIqPbhacAv9d\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''''error''''\\) or d[''''member''''].get\\(''''directOrderName''''\\)\\)\")",
+      "Bash(npm run:*)",
+      "Bash(taskkill /PID 34320 /F)",
+      "Bash(cmd /c \"taskkill /PID 34320 /F\")",
+      "Bash(npx kill-port:*)"
+    ]
+  }
+}
